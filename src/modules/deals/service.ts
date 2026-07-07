@@ -87,6 +87,47 @@ export async function updateDeal(
   return deal ?? null;
 }
 
+export async function updateDealStatus(
+  userId: string,
+  dealId: string,
+  status: DealStatus,
+): Promise<Deal | null> {
+  const db = getDb();
+  const [deal] = await db
+    .update(deals)
+    .set({ status, updatedAt: new Date() })
+    .where(and(eq(deals.id, dealId), eq(deals.userId, userId)))
+    .returning();
+  return deal ?? null;
+}
+
+export type DealStats = {
+  pipelineCents: number;
+  awaitingPaymentCents: number;
+  paidCents: number;
+  dueSoonCount: number;
+};
+
+export async function getDealStats(userId: string): Promise<DealStats> {
+  const db = getDb();
+  const [row] = await db
+    .select({
+      pipelineCents: sql<string>`coalesce(sum(${deals.amountCents}) filter (where ${deals.status} <> 'paid'), 0)`,
+      awaitingPaymentCents: sql<string>`coalesce(sum(${deals.amountCents}) filter (where ${deals.status} = 'delivered'), 0)`,
+      paidCents: sql<string>`coalesce(sum(${deals.amountCents}) filter (where ${deals.status} = 'paid'), 0)`,
+      dueSoonCount: sql<string>`count(*) filter (where ${deals.status} <> 'paid' and ${nearestDeadline} between current_date and current_date + 7)`,
+    })
+    .from(deals)
+    .where(eq(deals.userId, userId));
+
+  return {
+    pipelineCents: Number(row.pipelineCents),
+    awaitingPaymentCents: Number(row.awaitingPaymentCents),
+    paidCents: Number(row.paidCents),
+    dueSoonCount: Number(row.dueSoonCount),
+  };
+}
+
 export async function deleteDeal(
   userId: string,
   dealId: string,

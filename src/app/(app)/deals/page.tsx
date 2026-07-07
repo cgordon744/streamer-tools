@@ -1,38 +1,64 @@
 import { DealFormDialog } from "@/components/deal-form-dialog";
 import { DealsTable } from "@/components/deals-table";
+import { DEAL_STATUSES, type DealStatus } from "@/config/deals";
 import { requireUserId } from "@/modules/auth/session";
 import { listDeals } from "@/modules/deals/service";
 import { listSponsors } from "@/modules/sponsors/service";
+
+import { DealFilters } from "../deal-filters";
 
 export const metadata = {
   title: "Deals — Streamer Tools",
 };
 
-export default async function DealsPage() {
+function parseStatus(value: string | undefined): DealStatus | undefined {
+  return DEAL_STATUSES.includes(value as DealStatus)
+    ? (value as DealStatus)
+    : undefined;
+}
+
+export default async function DealsPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ status?: string; sponsor?: string }>;
+}) {
   const userId = await requireUserId();
-  const [deals, sponsors] = await Promise.all([
-    listDeals(userId),
-    listSponsors(userId),
-  ]);
+  const params = await searchParams;
+  const status = parseStatus(params.status);
+
+  const sponsors = await listSponsors(userId);
   const sponsorOptions = sponsors.map((s) => ({ id: s.id, name: s.name }));
+  const sponsorId = sponsorOptions.some((s) => s.id === params.sponsor)
+    ? params.sponsor
+    : undefined;
+
+  const deals = await listDeals(userId, { status, sponsorId });
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-semibold">Deals</h1>
+          <h1 className="text-2xl font-semibold tracking-tight">Deals</h1>
           <p className="text-muted-foreground mt-1 text-sm">
-            Every sponsorship deal, sorted by nearest deadline.
+            Every deal in detail, sorted by nearest deadline.
           </p>
         </div>
         <DealFormDialog sponsors={sponsorOptions} />
       </div>
 
-      <DealsTable
-        deals={deals}
-        sponsors={sponsorOptions}
-        emptyMessage="No deals yet. Add one to start tracking."
-      />
+      <DealFilters sponsors={sponsorOptions} />
+
+      <div className="bg-background rounded-lg border">
+        <DealsTable
+          deals={deals}
+          sponsors={sponsorOptions}
+          emptyMessage={
+            status || sponsorId
+              ? "No deals match these filters."
+              : "No deals yet. Add one to start tracking."
+          }
+        />
+      </div>
     </div>
   );
 }

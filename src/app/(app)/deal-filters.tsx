@@ -15,7 +15,13 @@ import { DEAL_STATUS_LABELS, DEAL_STATUSES } from "@/config/deals";
 
 const ALL = "all";
 
-export function DealFilters({ sponsors }: { sponsors: SponsorOption[] }) {
+export function DealFilters({
+  sponsors,
+  showStatusFilter = true,
+}: {
+  sponsors: SponsorOption[];
+  showStatusFilter?: boolean;
+}) {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -37,19 +43,21 @@ export function DealFilters({ sponsors }: { sponsors: SponsorOption[] }) {
 
   return (
     <div className="flex flex-wrap items-center gap-2">
-      <Select value={status} onValueChange={(v) => setParam("status", v)}>
-        <SelectTrigger className="w-40" aria-label="Filter by status">
-          <SelectValue />
-        </SelectTrigger>
-        <SelectContent>
-          <SelectItem value={ALL}>All statuses</SelectItem>
-          {DEAL_STATUSES.map((s) => (
-            <SelectItem key={s} value={s}>
-              {DEAL_STATUS_LABELS[s]}
-            </SelectItem>
-          ))}
-        </SelectContent>
-      </Select>
+      {showStatusFilter ? (
+        <Select value={status} onValueChange={(v) => setParam("status", v)}>
+          <SelectTrigger className="w-40" aria-label="Filter by status">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value={ALL}>All statuses</SelectItem>
+            {DEAL_STATUSES.map((s) => (
+              <SelectItem key={s} value={s}>
+                {DEAL_STATUS_LABELS[s]}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      ) : null}
 
       <Select value={sponsorId} onValueChange={(v) => setParam("sponsor", v)}>
         <SelectTrigger className="w-44" aria-label="Filter by sponsor">

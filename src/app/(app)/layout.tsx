@@ -1,15 +1,8 @@
-import Link from "next/link";
-
 import { Toaster } from "@/components/ui/sonner";
 import { requireUserId } from "@/modules/auth/session";
 
+import { AppNav } from "./app-nav";
 import { SignOutButton } from "./sign-out-button";
-
-const NAV_LINKS = [
-  { href: "/", label: "Dashboard" },
-  { href: "/sponsors", label: "Sponsors" },
-  { href: "/deals", label: "Deals" },
-];
 
 export default async function AppLayout({
   children,
@@ -20,27 +13,22 @@ export default async function AppLayout({
   await requireUserId();
 
   return (
-    <div className="min-h-screen">
-      <header className="border-b">
-        <div className="mx-auto flex max-w-5xl items-center justify-between px-4 py-3">
-          <nav className="flex items-center gap-6">
-            <Link href="/" className="font-semibold">
-              Streamer Tools
-            </Link>
-            {NAV_LINKS.map((link) => (
-              <Link
-                key={link.href}
-                href={link.href}
-                className="text-muted-foreground hover:text-foreground text-sm"
-              >
-                {link.label}
-              </Link>
-            ))}
-          </nav>
+    <div className="bg-muted/40 min-h-screen md:flex">
+      {/* Sidebar (desktop) / top bar (mobile) */}
+      <aside className="bg-background flex items-center justify-between gap-2 border-b px-4 py-2 md:sticky md:top-0 md:h-screen md:w-60 md:shrink-0 md:flex-col md:items-stretch md:justify-start md:border-r md:border-b-0 md:px-3 md:py-4">
+        <div className="flex items-center gap-2 md:mb-6 md:px-2">
+          <div className="bg-primary text-primary-foreground flex size-7 items-center justify-center rounded-md text-sm font-bold">
+            S
+          </div>
+          <span className="font-semibold tracking-tight">Streamer Tools</span>
+        </div>
+        <AppNav />
+        <div className="md:mt-auto md:border-t md:pt-3">
           <SignOutButton />
         </div>
-      </header>
-      <main className="mx-auto max-w-5xl px-4 py-6">{children}</main>
+      </aside>
+
+      <main className="min-w-0 flex-1 px-4 py-6 md:px-8">{children}</main>
       <Toaster />
     </div>
   );

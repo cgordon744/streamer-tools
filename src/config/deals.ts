@@ -30,6 +30,15 @@ export const DEAL_STATUS_BADGE_CLASSES: Record<DealStatus, string> = {
   paid: "bg-emerald-100 text-emerald-800 border-emerald-200",
 };
 
+// Solid dot/accent color per status, used by the pipeline board column headers.
+export const DEAL_STATUS_DOT_CLASSES: Record<DealStatus, string> = {
+  pitched: "bg-slate-400",
+  negotiating: "bg-amber-400",
+  signed: "bg-blue-500",
+  delivered: "bg-violet-500",
+  paid: "bg-emerald-500",
+};
+
 export const CONTENT_TYPES = ["video", "short", "post"] as const;
 
 export type ContentType = (typeof CONTENT_TYPES)[number];

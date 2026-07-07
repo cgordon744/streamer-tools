@@ -5,7 +5,14 @@
 1. ~~**Neon `DATABASE_URL`**~~ — resolved 2026-07-07: migration 0000 applied and production user seeded against the user's Neon project; login credentials verified through the pooled endpoint. Local dev still uses Docker Postgres.
 2. ~~**Vercel deploy**~~ — resolved 2026-07-07: user imported the repo in the Vercel dashboard with `DATABASE_URL` (pooled Neon) + `AUTH_SECRET`. Live at https://streamer-tools-gilt.vercel.app — verified in production: unauthenticated redirect, credentials login → session, authenticated dashboard render. Deploys automatically on push to `main`.
 
-*(No open items — MVP definition of done met.)*
+_(No open items — MVP definition of done met.)_
+
+### 2026-07-07 — Dashboard redesign: sidebar shell + KPI strip + pipeline board
+
+- **What:** Researched modern dashboard patterns (Appsmith/Stripe/Linear: sidebar + 4-6 KPI cards + card grid), CRM pipeline UX (kanban beats tables for 20–100 deals; drag-to-change-stage; keep table as detail view), and creator habits (top YouTuber Notion templates are all status boards — the kanban mental model is native to this audience). Rebuilt the app shell as a sidebar (collapses to top bar on mobile), added a 4-card KPI strip (pipeline value, awaiting payment, paid all-time, due-this-week — computed in one SQL aggregate via `getDealStats`), and replaced the dashboard table with a 5-column pipeline board: drag-and-drop between columns _and_ a per-card "Move to" menu (touch/keyboard fallback), optimistic updates via `useOptimistic`, per-column deal counts and dollar totals, and due-date chips that go amber within 7 days and red when overdue. Full table with status+sponsor filters moved to `/deals`. New `updateDealStatusAction` validates status against the config enum. No new dependencies (native HTML5 DnD).
+- **Why:** User explicitly expanded scope pre-launch ("make it feel like a modern dashboard, Jira-like pipeline view"). Board interaction verified in the driven browser: move Negotiating→Signed and back, optimistic UI + persisted, KPI numbers correct against seed data.
+- **Note:** preview screenshot tool timed out (renderer quirk) — visual check done via accessibility snapshots + live site.
+
 3. ~~**GitHub remote**~~ — resolved 2026-07-07: pushed to `git@github.com:cgordon744/streamer-tools.git` (SSH). CI runs on push; repo is private so verify the first run in the Actions tab.
 
 ## Log

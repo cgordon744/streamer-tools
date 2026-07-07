@@ -9,7 +9,13 @@ import {
 } from "@/lib/action-result";
 import { requireUserId } from "@/modules/auth/session";
 import { getSponsor } from "@/modules/sponsors/service";
-import { createDeal, deleteDeal, updateDeal } from "@/modules/deals/service";
+import { DEAL_STATUS_LABELS } from "@/config/deals";
+import {
+  createDeal,
+  deleteDeal,
+  updateDeal,
+  updateDealStatus,
+} from "@/modules/deals/service";
 import { dealInputSchema } from "@/modules/deals/validation";
 
 function parseDealForm(formData: FormData) {
@@ -71,6 +77,23 @@ export async function updateDealAction(
   }
   revalidateDealPages();
   return actionSuccess("Deal updated");
+}
+
+export async function updateDealStatusAction(
+  dealId: string,
+  status: string,
+): Promise<ActionResult> {
+  const userId = await requireUserId();
+  const parsedStatus = dealInputSchema.shape.status.safeParse(status);
+  if (!parsedStatus.success) {
+    return actionError("Invalid status");
+  }
+  const updated = await updateDealStatus(userId, dealId, parsedStatus.data);
+  if (!updated) {
+    return actionError("Deal not found");
+  }
+  revalidateDealPages();
+  return actionSuccess(`Moved to ${DEAL_STATUS_LABELS[parsedStatus.data]}`);
 }
 
 export async function deleteDealAction(dealId: string): Promise<ActionResult> {
