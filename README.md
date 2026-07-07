@@ -1,36 +1,34 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Streamer Tools
 
-## Getting Started
+A YouTube sponsorship deal tracker: which brands you're talking to, what's owed, what's due, what's been paid.
 
-First, run the development server:
+## Stack
+
+Next.js (App Router) · TypeScript · Tailwind + shadcn/ui · Drizzle ORM + Postgres (Neon in prod) · Auth.js v5 · Vercel
+
+See [ARCHITECTURE.md](ARCHITECTURE.md) for structure and rationale, [BUILD_LOG.md](BUILD_LOG.md) for progress and open items.
+
+## Local development
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
+pnpm install
+docker compose up -d          # local Postgres on :5433
+cp .env.example .env          # fill in AUTH_SECRET + SEED_USER_*
+pnpm db:migrate               # apply migrations
+pnpm db:seed                  # create the login user from SEED_USER_* vars
 pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Log in at http://localhost:3000/login with the seeded credentials.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Scripts
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+- `pnpm lint` / `pnpm typecheck` / `pnpm format` — checks (CI runs all three + build)
+- `pnpm db:generate` — regenerate migrations after schema changes
+- `pnpm db:studio` — Drizzle Studio against `DATABASE_URL`
 
-## Learn More
+## Deploy (Vercel + Neon)
 
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+1. Create a Neon project; grab the pooled connection string.
+2. Import this repo in Vercel; set `DATABASE_URL` and `AUTH_SECRET` env vars.
+3. Run migrations against Neon: `DATABASE_URL=<neon-url> pnpm db:migrate`, then seed: `DATABASE_URL=<neon-url> pnpm db:seed` (with `SEED_USER_*` set).
