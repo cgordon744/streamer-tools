@@ -34,7 +34,7 @@
   - Sponsors: created 2 via dialog, table renders, empty-state before that.
   - Deals: created 3 (one with both dates, one with deliverable only, one with none), edited one ($500.50 → $650, dialog prefilled correctly), created + deleted a throwaway via row actions with confirm dialog.
   - Dashboard: sort order Jul 12 → Jul 20 → no-dates-last (LEAST/NULLS LAST working); `?status=` and `?sponsor=` filters correct individually and combined; filter dropdowns update the URL; Clear button appears.
-- **Caveat worth one manual check:** in the headless preview, the client didn't auto-follow the post-login redirect (session was created; manual navigation worked). This is the standard Auth.js/Next tutorial pattern and almost certainly a headless-fetch cookie-timing artifact, but do one real-browser login to confirm you land on `/` directly.
+- ~~**Caveat worth one manual check:**~~ this turned out to be a REAL BUG, not a headless artifact — confirmed on the first Vercel deploy (login bounced back to /login despite a valid session being created). Root cause: `signIn` was called without `redirectTo`, so Auth.js redirected to the referring page (/login), and /login didn't redirect authenticated users. Fixed 2026-07-07: explicit `redirectTo: "/"` in `authenticate`, and /login now redirects to `/` when a session exists. Regression-tested in the driven browser: login lands on the dashboard; /login while authenticated bounces to `/`. Lesson recorded: don't write off a reproducible symptom as a tooling artifact without proving it.
 - **Not explicitly re-tested:** sponsor edit/delete UI (identical component pattern to deals, which passed).
 
 ## End-of-session summary (2026-07-06)

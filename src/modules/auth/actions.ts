@@ -9,7 +9,13 @@ export async function authenticate(
   formData: FormData,
 ): Promise<string | undefined> {
   try {
-    await signIn("credentials", formData);
+    // Without an explicit redirectTo, signIn falls back to the referring
+    // page (/login) and the login appears to have silently failed.
+    await signIn("credentials", {
+      email: formData.get("email"),
+      password: formData.get("password"),
+      redirectTo: "/",
+    });
   } catch (error) {
     if (error instanceof AuthError) {
       return "Invalid email or password.";
