@@ -3,7 +3,9 @@
 ## NEEDS INPUT
 
 1. ~~**Neon `DATABASE_URL`**~~ — resolved 2026-07-07: migration 0000 applied and production user seeded against the user's Neon project; login credentials verified through the pooled endpoint. Local dev still uses Docker Postgres.
-2. **Vercel deploy** — no Vercel CLI/token on this machine. To deploy: connect the GitHub repo in the Vercel dashboard (or `npm i -g vercel && vercel login` for CLI), set env vars `DATABASE_URL` (pooled Neon string) and `AUTH_SECRET`, deploy.
+2. ~~**Vercel deploy**~~ — resolved 2026-07-07: user imported the repo in the Vercel dashboard with `DATABASE_URL` (pooled Neon) + `AUTH_SECRET`. Live at https://streamer-tools-gilt.vercel.app — verified in production: unauthenticated redirect, credentials login → session, authenticated dashboard render. Deploys automatically on push to `main`.
+
+*(No open items — MVP definition of done met.)*
 3. ~~**GitHub remote**~~ — resolved 2026-07-07: pushed to `git@github.com:cgordon744/streamer-tools.git` (SSH). CI runs on push; repo is private so verify the first run in the Actions tab.
 
 ## Log
