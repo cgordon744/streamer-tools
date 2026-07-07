@@ -1,13 +1,13 @@
 "use client";
 
-import { Building2, Kanban, Table2 } from "lucide-react";
+import { Building2, LayoutDashboard, Table2 } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
 import { cn } from "@/lib/utils";
 
 const NAV_LINKS = [
-  { href: "/", label: "Dashboard", icon: Kanban },
+  { href: "/", label: "Dashboard", icon: LayoutDashboard },
   { href: "/deals", label: "Deals", icon: Table2 },
   { href: "/sponsors", label: "Sponsors", icon: Building2 },
 ];
@@ -24,15 +24,19 @@ export function AppNav() {
           <Link
             key={link.href}
             href={link.href}
+            title={link.label}
             className={cn(
               "flex items-center gap-2.5 rounded-md px-3 py-2 text-sm font-medium transition-colors",
+              "md:group-data-[state=collapsed]/sidebar:justify-center md:group-data-[state=collapsed]/sidebar:px-2",
               active
                 ? "bg-primary/5 text-foreground"
                 : "text-muted-foreground hover:bg-muted hover:text-foreground",
             )}
           >
-            <Icon className={cn("size-4", active && "text-primary")} />
-            <span className="hidden sm:inline">{link.label}</span>
+            <Icon className={cn("size-4 shrink-0", active && "text-primary")} />
+            <span className="hidden sm:inline md:group-data-[state=collapsed]/sidebar:hidden">
+              {link.label}
+            </span>
           </Link>
         );
       })}
