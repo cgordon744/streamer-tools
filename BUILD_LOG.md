@@ -2,8 +2,8 @@
 
 ## NEEDS INPUT
 
-1. **Neon `DATABASE_URL`** — no Neon credentials on this machine. Developing against local Docker Postgres (`docker compose up -d`). To go live: create a Neon project, put the pooled connection string in Vercel env vars, run migrations against it.
-2. **Vercel deploy** — no Vercel CLI/token on this machine. To deploy: `npm i -g vercel && vercel login`, then `vercel link` in this repo and `vercel --prod` (or connect the GitHub repo in the Vercel dashboard). Env vars needed: `DATABASE_URL`, `AUTH_SECRET`.
+1. ~~**Neon `DATABASE_URL`**~~ — resolved 2026-07-07: migration 0000 applied and production user seeded against the user's Neon project; login credentials verified through the pooled endpoint. Local dev still uses Docker Postgres.
+2. **Vercel deploy** — no Vercel CLI/token on this machine. To deploy: connect the GitHub repo in the Vercel dashboard (or `npm i -g vercel && vercel login` for CLI), set env vars `DATABASE_URL` (pooled Neon string) and `AUTH_SECRET`, deploy.
 3. ~~**GitHub remote**~~ — resolved 2026-07-07: pushed to `git@github.com:cgordon744/streamer-tools.git` (SSH). CI runs on push; repo is private so verify the first run in the Actions tab.
 
 ## Log
