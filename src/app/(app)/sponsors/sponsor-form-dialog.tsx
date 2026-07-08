@@ -1,8 +1,5 @@
 "use client";
 
-import { useActionState, useCallback, useState } from "react";
-import { toast } from "sonner";
-
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -15,7 +12,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import type { ActionResult } from "@/lib/action-result";
+import { useFormDialog } from "@/hooks/use-form-dialog";
 import {
   createSponsorAction,
   updateSponsorAction,
@@ -34,34 +31,12 @@ export function SponsorFormDialog({
   onOpenChange?: (open: boolean) => void;
 }) {
   const isEdit = !!sponsor;
-  const isControlled = controlledOpen !== undefined;
-  const [uncontrolledOpen, setUncontrolledOpen] = useState(false);
-  const open = isControlled ? controlledOpen : uncontrolledOpen;
-  const setOpen = useCallback(
-    (value: boolean) => {
-      if (isControlled) onOpenChange?.(value);
-      else setUncontrolledOpen(value);
-    },
-    [isControlled, onOpenChange],
-  );
-
-  // Wrap the server action so success closes the dialog from within the
-  // submit transition — no effect needed, and reopening can't replay it.
-  const [state, formAction, isPending] = useActionState(
-    async (
-      prevState: ActionResult | undefined,
-      formData: FormData,
-    ): Promise<ActionResult> => {
-      const action = isEdit ? updateSponsorAction : createSponsorAction;
-      const result = await action(prevState, formData);
-      if (result.ok) {
-        toast.success(result.message);
-        setOpen(false);
-      }
-      return result;
-    },
-    undefined,
-  );
+  const { open, setOpen, isControlled, state, formAction, isPending } =
+    useFormDialog(
+      isEdit ? updateSponsorAction : createSponsorAction,
+      controlledOpen,
+      onOpenChange,
+    );
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>

@@ -25,4 +25,3 @@ export const sponsors = pgTable(
 );
 
 export type Sponsor = typeof sponsors.$inferSelect;
-export type NewSponsor = typeof sponsors.$inferInsert;

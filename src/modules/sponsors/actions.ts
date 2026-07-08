@@ -24,6 +24,12 @@ function parseSponsorForm(formData: FormData) {
   });
 }
 
+// Sponsors appear on their own page and in dashboard filter options.
+function revalidateSponsorPages() {
+  revalidatePath("/sponsors");
+  revalidatePath("/");
+}
+
 export async function createSponsorAction(
   _prevState: ActionResult | undefined,
   formData: FormData,
@@ -34,8 +40,7 @@ export async function createSponsorAction(
     return actionError(parsed.error.issues[0].message);
   }
   await createSponsor(userId, parsed.data);
-  revalidatePath("/sponsors");
-  revalidatePath("/");
+  revalidateSponsorPages();
   return actionSuccess("Sponsor created");
 }
 
@@ -56,8 +61,7 @@ export async function updateSponsorAction(
   if (!updated) {
     return actionError("Sponsor not found");
   }
-  revalidatePath("/sponsors");
-  revalidatePath("/");
+  revalidateSponsorPages();
   return actionSuccess("Sponsor updated");
 }
 
@@ -69,7 +73,6 @@ export async function deleteSponsorAction(
   if (!deleted) {
     return actionError("Sponsor not found");
   }
-  revalidatePath("/sponsors");
-  revalidatePath("/");
+  revalidateSponsorPages();
   return actionSuccess("Sponsor deleted");
 }

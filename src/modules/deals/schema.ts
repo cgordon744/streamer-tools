@@ -48,4 +48,3 @@ export const deals = pgTable(
 );
 
 export type Deal = typeof deals.$inferSelect;
-export type NewDeal = typeof deals.$inferInsert;

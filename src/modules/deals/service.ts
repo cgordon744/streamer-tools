@@ -46,19 +46,6 @@ export async function listDeals(
   return rows.map((row) => ({ ...row.deal, sponsorName: row.sponsorName }));
 }
 
-export async function getDeal(
-  userId: string,
-  dealId: string,
-): Promise<Deal | null> {
-  const db = getDb();
-  const [deal] = await db
-    .select()
-    .from(deals)
-    .where(and(eq(deals.id, dealId), eq(deals.userId, userId)))
-    .limit(1);
-  return deal ?? null;
-}
-
 export async function createDeal(
   userId: string,
   input: DealInput,
