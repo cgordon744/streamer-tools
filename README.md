@@ -27,6 +27,15 @@ Log in at http://localhost:3000/login with the seeded credentials.
 - `pnpm db:generate` — regenerate migrations after schema changes
 - `pnpm db:studio` — Drizzle Studio against `DATABASE_URL`
 
+## Testing
+
+- `pnpm test` — full suite (unit + components + system)
+- `pnpm test:unit` — pure-logic and component tests, no database needed
+- `pnpm test:system` — service-layer tests against real Postgres
+- `pnpm test:watch` — watch mode
+
+Vitest runs three projects (see `vitest.config.mts`): **unit** (lib helpers, Zod schemas, config consistency), **components** (React Testing Library in jsdom; server actions mocked at the module boundary), and **system** (sponsor/deal/auth services against Postgres, including tenant-isolation checks). System tests need the docker-compose database running — they drop and recreate a dedicated `streamer_tools_test` database on every run and apply the checked-in migrations, so dev data is never touched. Override `TEST_DATABASE_URL` / `TEST_ADMIN_DATABASE_URL` for CI.
+
 ## Deploy (Vercel + Neon)
 
 1. Create a Neon project; grab the pooled connection string.

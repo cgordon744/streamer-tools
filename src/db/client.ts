@@ -29,3 +29,12 @@ export function getDb(): NodePgDatabase<typeof schema> {
   }
   return cachedDb;
 }
+
+// Release the pool so short-lived processes (tests, scripts) can exit cleanly.
+export async function closeDb(): Promise<void> {
+  if (globalForDb.dbPool) {
+    await globalForDb.dbPool.end();
+    globalForDb.dbPool = undefined;
+    cachedDb = undefined;
+  }
+}
