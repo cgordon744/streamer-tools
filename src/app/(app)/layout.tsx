@@ -1,5 +1,6 @@
 import { cookies } from "next/headers";
 
+import { ModeToggle } from "@/components/mode-toggle";
 import { Toaster } from "@/components/ui/sonner";
 import { requireUserId } from "@/modules/auth/session";
 
@@ -26,7 +27,8 @@ export default async function AppLayout({
     <div className="bg-muted/40 min-h-screen md:flex">
       <AppSidebar initialCollapsed={collapsed} initialWidth={width}>
         <AppNav />
-        <div className="md:mt-auto md:border-t md:pt-3">
+        <div className="flex items-center gap-1 md:mt-auto md:flex-col md:items-stretch md:gap-0 md:border-t md:pt-3">
+          <ModeToggle />
           <SignOutButton />
         </div>
       </AppSidebar>

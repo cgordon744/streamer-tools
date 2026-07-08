@@ -9,19 +9,12 @@ import {
 import { useOptimistic, useState, useTransition } from "react";
 import { toast } from "sonner";
 
+import { ConfirmDeleteDialog } from "@/components/confirm-delete-dialog";
 import {
   DealFormDialog,
   type SponsorOption,
 } from "@/components/deal-form-dialog";
 import { Button } from "@/components/ui/button";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -144,8 +137,9 @@ export function PipelineBoard({
 }
 
 const URGENCY_CLASSES: Record<DueUrgency, string> = {
-  overdue: "text-red-600 bg-red-50 border-red-200",
-  soon: "text-amber-700 bg-amber-50 border-amber-200",
+  overdue:
+    "text-red-600 bg-red-50 border-red-200 dark:text-red-400 dark:bg-red-400/10 dark:border-red-400/20",
+  soon: "text-amber-700 bg-amber-50 border-amber-200 dark:text-amber-400 dark:bg-amber-400/10 dark:border-amber-400/20",
   normal: "text-muted-foreground bg-transparent border-transparent",
 };
 
@@ -187,19 +181,6 @@ function DealCard({
 }) {
   const [editOpen, setEditOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
-  const [isPending, startTransition] = useTransition();
-
-  function handleDelete() {
-    startTransition(async () => {
-      const result = await deleteDealAction(deal.id);
-      if (result.ok) {
-        toast.success(result.message);
-        setDeleteOpen(false);
-      } else {
-        toast.error(result.message);
-      }
-    });
-  }
 
   return (
     <>
@@ -288,26 +269,13 @@ function DealCard({
         />
       ) : null}
 
-      <Dialog open={deleteOpen} onOpenChange={setDeleteOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Delete this deal?</DialogTitle>
-            <DialogDescription>This cannot be undone.</DialogDescription>
-          </DialogHeader>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setDeleteOpen(false)}>
-              Cancel
-            </Button>
-            <Button
-              variant="destructive"
-              onClick={handleDelete}
-              disabled={isPending}
-            >
-              {isPending ? "Deleting…" : "Delete"}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      <ConfirmDeleteDialog
+        open={deleteOpen}
+        onOpenChange={setDeleteOpen}
+        title="Delete this deal?"
+        description="This cannot be undone."
+        action={() => deleteDealAction(deal.id)}
+      />
     </>
   );
 }
