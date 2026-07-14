@@ -2,12 +2,11 @@
 
 ## NEEDS INPUT
 
-1. ~~**Neon `DATABASE_URL`**~~ — resolved 2026-07-07: migration 0000 applied and production user seeded against the user's Neon project; login credentials verified through the pooled endpoint. Local dev still uses Docker Postgres.
-2. ~~**Vercel deploy**~~ — resolved 2026-07-07: user imported the repo in the Vercel dashboard with `DATABASE_URL` (pooled Neon) + `AUTH_SECRET`. Live at https://streamer-tools-gilt.vercel.app — verified in production: unauthenticated redirect, credentials login → session, authenticated dashboard render. Deploys automatically on push to `main`.
-
-3. ~~**GitHub remote**~~ — resolved 2026-07-07: pushed to `git@github.com:cgordon744/streamer-tools.git` (SSH). CI runs on push; repo has since been made public.
-
-_(No open items — MVP definition of done met.)_
+1. **Email sending credential (`RESEND_API_KEY` + `EMAIL_REMINDERS_ENABLED=true` in Vercel env)** — added 2026-07-13. The reminder pipeline (deliverable due in 48h, payment overdue) is built and runs on a daily Vercel cron, but no email-provider credential exists, so the sender is a console/log stub. To go live: create a Resend account + API key, set `RESEND_API_KEY` and `EMAIL_REMINDERS_ENABLED=true` in Vercel project env. No code change needed — the flag flips the sender in `src/core/email/sender.ts`. (Per session rules, no service signups were performed.)
+2. **`CRON_SECRET` in Vercel env** — added 2026-07-13. The cron route refuses to run unauthenticated in production until this is set (any random string; Vercel automatically sends it as a Bearer token to cron invocations). Generate with `openssl rand -base64 32` and add to Vercel project env.
+3. ~~**Neon `DATABASE_URL`**~~ — resolved 2026-07-07: migration 0000 applied and production user seeded against the user's Neon project; login credentials verified through the pooled endpoint. Local dev still uses Docker Postgres. _2026-07-13 note: no prod DB credential exists on this machine; prod migrations now run as the Vercel release step instead (see Phase 2 entry)._
+4. ~~**Vercel deploy**~~ — resolved 2026-07-07: user imported the repo in the Vercel dashboard with `DATABASE_URL` (pooled Neon) + `AUTH_SECRET`. Live at https://streamer-tools-gilt.vercel.app — verified in production: unauthenticated redirect, credentials login → session, authenticated dashboard render. Deploys automatically on push to `main`.
+5. ~~**GitHub remote**~~ — resolved 2026-07-07: pushed to `git@github.com:cgordon744/streamer-tools.git` (SSH). CI runs on push; repo has since been made public.
 
 ## Log
 
@@ -89,3 +88,23 @@ _(No open items — MVP definition of done met.)_
 - **Chassis-level decision (stack table):** the repo runs **Next.js 16.2**, not the 14 in CHASSIS_SPEC §1. Scaffold choice was logged 2026-07-06; app is built, tested, and deployed on 16. Downgrading is pure risk; **treating Next 16 as the chassis standard** — CHASSIS_SPEC §1 should read "Next.js 16 App Router". Per §1's own rule, this entry is that decision's log.
 - **Touched /core or boundaries?** No (audit only).
 - **Next:** Phase 2 alignment — restructure, enum→text migration (+ stage remap to spec §6 list), table renames, soft deletes, `hasAccess` stub, events table.
+
+### 2026-07-13 — Chassis alignment (Phase 2)
+
+- **What:** Four commits, each deployed green: (1) restructure into `/domains/tracker` + `/core` — sponsors+deals merged into one tracker domain (they're one tool), tracker UI out of shared `components/`; (2) DB enums → text columns with stage remap to the spec §6 list (`lead / negotiating / contract_signed / content_delivered / invoiced / paid / dead`), `tracker_*` table renames (indexes + FK constraints renamed to match), soft deletes everywhere; (3) `hasAccess(user, feature)` stub in `/core/billing` wired into all tracker pages; (4) internal `events` table + `trackEvent()` wired to signup / deal_created / deal_stage_changed / daily-throttled active heartbeat.
+- **Touched /core or boundaries?** Yes — created `/core` itself. Two logged exceptions/decisions: (a) `core/db/schema.ts` aggregates domain schemas for drizzle-kit — the one place core sees domains, commented as such; (b) **migrations now run as the Vercel release step** (`vercel.json` buildCommand `pnpm db:migrate && pnpm build`, per CHASSIS §7) because no prod DB credential exists on this machine — the deploy's env has `DATABASE_URL`. Verified working: the Phase-2 push migrated Neon (renames + enum drop + remap) and deployed successfully on the first try.
+- **Tooling note:** drizzle-kit's rename detection requires a TTY, so migration `0002` (renames + soft deletes) is hand-written SQL + hand-built snapshot; parity proven by `db:generate` reporting no drift and the system suite rebuilding a fresh DB through the whole chain (19/19 green).
+- **Data note:** prod deal rows' status values were remapped in-place (`pitched→lead`, `signed→contract_signed`, `delivered→content_delivered`) — non-destructive, reversible.
+- **Next:** Phase 3 — payment tracking + overdue (hero), dashboard strip, deliverables checklist, exported data contract, reminder cron.
+
+### 2026-07-13 — Tracker spec §6 delta (Phase 3)
+
+- **What (migration 0004 + one feature commit, then cron commit):**
+  - **Payment tracking + overdue (hero):** `payment_status` (`not_invoiced / invoiced / paid`, config-driven text) on deals, backfilled from stage. Overdue is always *computed* (`paymentDueDate` past + not paid + not dead), never stored — `domains/tracker/payments.ts` holds the pure logic, mirrored in SQL for stats. Kanban cards get a red `Overdue Nd · $X` banner + red border; deals table gets a Payment column; deal form gets a payment select.
+  - **Decision — stage vs. payment are two axes, synced forward-only:** the spec's stage list contains Invoiced/Paid *and* asks for a separate payment status. Resolution: stage = where the work is, payment = where the money is; dragging a deal to the Invoiced/Paid stage advances payment status (never backward — dragging a paid deal back does not un-pay it), while the form edits payment directly. Covered by a system test.
+  - **Dashboard strip** replaced the old KPI cards, same visual pattern: active deals · $ in flight · overdue payments (goes red, spec's alert) · next deliverable (nearest upcoming across deal dates *and* open checklist items).
+  - **Deliverables checklist:** `tracker_deliverables` (userId-scoped, soft-delete) + details dialog (click a kanban card): stage/payment badges, dates, notes, checklist with add/check/delete and due-date urgency colors. Card shows a `n/m` checklist chip.
+  - **Exported data contract (spec §5):** `getVerifiedSponsors` / `getDealHistory` / `getPayableDeals` in tracker's `queries.ts`, each doc-commented with its consuming future domain (media kit / rates / invoices).
+  - **Reminder cron:** `vercel.json` cron (daily 14:00 UTC) → `/api/cron/reminders` (excluded from session auth; `CRON_SECRET` Bearer check, refuses unauthenticated prod runs). Logic in `domains/tracker/reminders.ts` is stateless/idempotent-per-day: deliverable reminder fires when due date is exactly 2 days out; overdue-payment reminder on day 1 past due then weekly — no sent-log table needed. Sender behind `core/email/sender.ts` interface: Resend implementation ready but gated by `EMAIL_REMINDERS_ENABLED` flag + `RESEND_API_KEY`; console stub otherwise. **See NEEDS INPUT #1–2.**
+- **Touched /core or boundaries?** Yes: `/core/email` (sender interface) and `/core/config/flags.ts` (feature flags, chassis §7) added; payment-status enums joined `/core/config/deals.ts`; proxy matcher now excludes `api/cron`.
+- **Scope note:** committed as one feature commit rather than four — the changes share `queries.ts`/`schema.ts`/board files, and splitting would have produced intermediate states needing their own verification. Cron is separate.

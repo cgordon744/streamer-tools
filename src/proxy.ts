@@ -7,5 +7,9 @@ import { authConfig } from "@/core/auth/config";
 export default NextAuth(authConfig).auth;
 
 export const config = {
-  matcher: ["/((?!api/auth|login|_next/static|_next/image|favicon.ico).*)"],
+  // api/cron is excluded from session auth — it authenticates via CRON_SECRET
+  // in the route handler instead.
+  matcher: [
+    "/((?!api/auth|api/cron|login|_next/static|_next/image|favicon.ico).*)",
+  ],
 };
