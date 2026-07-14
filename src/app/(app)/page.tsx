@@ -3,6 +3,8 @@ import { PipelineBoard } from "@/domains/tracker/components/pipeline-board";
 import { StatCards } from "@/domains/tracker/components/stat-cards";
 import { todayIso } from "@/lib/dates";
 import { requireUserId } from "@/core/auth/session";
+import { hasAccess } from "@/core/billing/entitlements";
+import { UpgradeNotice } from "@/core/billing/upgrade-notice";
 import { getDealStats, listDeals } from "@/domains/tracker/queries";
 import { listSponsors } from "@/domains/tracker/queries";
 
@@ -18,6 +20,9 @@ export default async function DashboardPage({
   searchParams: Promise<{ sponsor?: string }>;
 }) {
   const userId = await requireUserId();
+  if (!(await hasAccess(userId, "tracker"))) {
+    return <UpgradeNotice toolName="Sponsor Deal Tracker" />;
+  }
   const params = await searchParams;
 
   const [sponsors, stats] = await Promise.all([

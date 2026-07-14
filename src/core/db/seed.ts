@@ -1,6 +1,9 @@
 import "dotenv/config";
 
+import { eq } from "drizzle-orm";
+
 import { hashPassword } from "@/core/auth/password";
+import { trackEvent } from "@/core/events/track";
 
 import { getDb } from "./client";
 import { users } from "./schema";
@@ -19,6 +22,12 @@ async function main() {
   const db = getDb();
   const passwordHash = await hashPassword(password);
 
+  const [existing] = await db
+    .select({ id: users.id })
+    .from(users)
+    .where(eq(users.email, email))
+    .limit(1);
+
   const [user] = await db
     .insert(users)
     .values({ email, name, passwordHash })
@@ -27,6 +36,12 @@ async function main() {
       set: { name, passwordHash, updatedAt: new Date() },
     })
     .returning({ id: users.id, email: users.email });
+
+  // Seeding is the only signup path today — instrument it as one, first
+  // creation only (CHASSIS_SPEC §7 activation metrics).
+  if (!existing) {
+    await trackEvent(user.id, "signup");
+  }
 
   console.log(`Seeded user ${user.email} (${user.id})`);
   process.exit(0);

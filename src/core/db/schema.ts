@@ -5,3 +5,4 @@
 
 export * from "@/core/auth/schema";
 export * from "@/domains/tracker/schema";
+export * from "@/core/events/schema";

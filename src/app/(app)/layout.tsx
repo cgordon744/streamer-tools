@@ -3,6 +3,7 @@ import { cookies } from "next/headers";
 import { ModeToggle } from "@/components/mode-toggle";
 import { Toaster } from "@/components/ui/sonner";
 import { requireUserId } from "@/core/auth/session";
+import { recordHeartbeat } from "@/core/events/track";
 
 import { AppNav } from "./app-nav";
 import { AppSidebar, SIDEBAR_DEFAULT_WIDTH } from "./app-sidebar";
@@ -14,7 +15,9 @@ export default async function AppLayout({
   children: React.ReactNode;
 }) {
   // Defense in depth alongside proxy.ts route protection.
-  await requireUserId();
+  const userId = await requireUserId();
+  // Retention instrumentation (CHASSIS_SPEC §7) — throttled internally.
+  await recordHeartbeat(userId);
 
   const cookieStore = await cookies();
   const collapsed = cookieStore.get("sidebar-collapsed")?.value === "1";

@@ -7,6 +7,8 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { requireUserId } from "@/core/auth/session";
+import { hasAccess } from "@/core/billing/entitlements";
+import { UpgradeNotice } from "@/core/billing/upgrade-notice";
 import { listSponsors } from "@/domains/tracker/queries";
 
 import { SponsorFormDialog } from "@/domains/tracker/components/sponsor-form-dialog";
@@ -18,6 +20,9 @@ export const metadata = {
 
 export default async function SponsorsPage() {
   const userId = await requireUserId();
+  if (!(await hasAccess(userId, "tracker"))) {
+    return <UpgradeNotice toolName="Sponsor Deal Tracker" />;
+  }
   const sponsors = await listSponsors(userId);
 
   return (

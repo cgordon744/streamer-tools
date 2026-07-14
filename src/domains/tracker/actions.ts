@@ -9,11 +9,13 @@ import {
 } from "@/lib/action-result";
 import { requireUserId } from "@/core/auth/session";
 import { DEAL_STATUS_LABELS } from "@/core/config/deals";
+import { trackEvent } from "@/core/events/track";
 import {
   createDeal,
   createSponsor,
   deleteDeal,
   deleteSponsor,
+  getDeal,
   getSponsor,
   updateDeal,
   updateDealStatus,
@@ -56,6 +58,7 @@ export async function createDealAction(
     return actionError("Sponsor not found");
   }
   await createDeal(userId, parsed.data);
+  await trackEvent(userId, "deal_created");
   revalidateDealPages();
   return actionSuccess("Deal created");
 }
@@ -77,9 +80,16 @@ export async function updateDealAction(
   if (!sponsor) {
     return actionError("Sponsor not found");
   }
+  const existing = await getDeal(userId, dealId);
+  if (!existing) {
+    return actionError("Deal not found");
+  }
   const updated = await updateDeal(userId, dealId, parsed.data);
   if (!updated) {
     return actionError("Deal not found");
+  }
+  if (existing.status !== updated.status) {
+    await trackEvent(userId, "deal_stage_changed");
   }
   revalidateDealPages();
   return actionSuccess("Deal updated");
@@ -98,6 +108,7 @@ export async function updateDealStatusAction(
   if (!updated) {
     return actionError("Deal not found");
   }
+  await trackEvent(userId, "deal_stage_changed");
   revalidateDealPages();
   return actionSuccess(`Moved to ${DEAL_STATUS_LABELS[parsedStatus.data]}`);
 }

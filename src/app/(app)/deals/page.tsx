@@ -2,6 +2,8 @@ import { DealFormDialog } from "@/domains/tracker/components/deal-form-dialog";
 import { DealsTable } from "@/domains/tracker/components/deals-table";
 import { DEAL_STATUSES, type DealStatus } from "@/core/config/deals";
 import { requireUserId } from "@/core/auth/session";
+import { hasAccess } from "@/core/billing/entitlements";
+import { UpgradeNotice } from "@/core/billing/upgrade-notice";
 import { listDeals } from "@/domains/tracker/queries";
 import { listSponsors } from "@/domains/tracker/queries";
 
@@ -23,6 +25,9 @@ export default async function DealsPage({
   searchParams: Promise<{ status?: string; sponsor?: string }>;
 }) {
   const userId = await requireUserId();
+  if (!(await hasAccess(userId, "tracker"))) {
+    return <UpgradeNotice toolName="Sponsor Deal Tracker" />;
+  }
   const params = await searchParams;
   const status = parseStatus(params.status);
 
