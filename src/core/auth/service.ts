@@ -1,7 +1,7 @@
 import { eq } from "drizzle-orm";
 
-import { getDb } from "@/db/client";
-import { users, type User } from "@/modules/auth/schema";
+import { getDb } from "@/core/db/client";
+import { users, type User } from "@/core/auth/schema";
 
 export async function findUserByEmail(email: string): Promise<User | null> {
   const db = getDb();

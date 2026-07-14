@@ -4,6 +4,10 @@ import { MoreHorizontal } from "lucide-react";
 import { useState } from "react";
 
 import { ConfirmDeleteDialog } from "@/components/confirm-delete-dialog";
+import {
+  DealFormDialog,
+  type SponsorOption,
+} from "@/domains/tracker/components/deal-form-dialog";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -11,12 +15,16 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { deleteSponsorAction } from "@/modules/sponsors/actions";
-import type { Sponsor } from "@/modules/sponsors/schema";
+import { deleteDealAction } from "@/domains/tracker/actions";
+import type { Deal } from "@/domains/tracker/schema";
 
-import { SponsorFormDialog } from "./sponsor-form-dialog";
-
-export function SponsorRowActions({ sponsor }: { sponsor: Sponsor }) {
+export function DealRowActions({
+  deal,
+  sponsors,
+}: {
+  deal: Deal;
+  sponsors: SponsorOption[];
+}) {
   const [editOpen, setEditOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
 
@@ -24,7 +32,7 @@ export function SponsorRowActions({ sponsor }: { sponsor: Sponsor }) {
     <>
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <Button variant="ghost" size="icon" aria-label="Sponsor actions">
+          <Button variant="ghost" size="icon" aria-label="Deal actions">
             <MoreHorizontal />
           </Button>
         </DropdownMenuTrigger>
@@ -42,8 +50,9 @@ export function SponsorRowActions({ sponsor }: { sponsor: Sponsor }) {
       </DropdownMenu>
 
       {editOpen ? (
-        <SponsorFormDialog
-          sponsor={sponsor}
+        <DealFormDialog
+          deal={deal}
+          sponsors={sponsors}
           open={editOpen}
           onOpenChange={setEditOpen}
         />
@@ -52,9 +61,9 @@ export function SponsorRowActions({ sponsor }: { sponsor: Sponsor }) {
       <ConfirmDeleteDialog
         open={deleteOpen}
         onOpenChange={setDeleteOpen}
-        title={`Delete ${sponsor.name}?`}
-        description="This also deletes all deals linked to this sponsor. This cannot be undone."
-        action={() => deleteSponsorAction(sponsor.id)}
+        title="Delete this deal?"
+        description="This cannot be undone."
+        action={() => deleteDealAction(deal.id)}
       />
     </>
   );

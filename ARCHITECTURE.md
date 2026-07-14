@@ -21,22 +21,29 @@ A YouTube sponsorship deal tracker. MVP is single-user, but the structure assume
 - **Port 5433 for local Postgres** — avoids colliding with any system Postgres on 5432.
 - **shadcn set up manually (components.json + globals.css)** — the CLI's `init` is interactive-only in this version; `add` works fine non-interactively once config exists.
 
-## Layout
+## Layout (chassis-aligned 2026-07-13, per docs/CHASSIS_SPEC.md §2)
 
 ```
 src/
   app/                    # routes only — thin, no business logic
     (auth)/login/         # public
     (app)/                # authenticated shell: dashboard, sponsors, deals
-  modules/                # domain layer — the real API surface
-    sponsors/             #   schema (drizzle), service (queries), actions (server actions), validation (zod)
-    deals/
-    auth/                 # session helpers, password hashing
-  db/                     # drizzle client, migrations config, seed
-  config/                 # deal statuses, content types — single source of truth
-  components/             # shared UI (shadcn under ui/)
-  lib/                    # generic utils
+  domains/                # one folder per portfolio tool
+    tracker/              #   schema.ts (drizzle), queries.ts (all DB access),
+                          #   actions.ts (server actions), validation.ts (zod),
+                          #   types.ts (public type surface), components/
+  core/                   # the chassis — shared by every domain
+    auth/                 # Auth.js config, session helpers, users schema, password hashing
+    db/                   # drizzle client, aggregated schema, seed
+    config/               # config-driven enums (deal stages, content types)
+  components/             # genuinely shared UI only (shadcn under ui/, theme, dialogs)
+  lib/                    # pure generic utils
 ```
+
+Boundary rules (CHASSIS_SPEC §2): domains import only from `/core` and `/lib`;
+cross-domain access goes through the other domain's exported `queries.ts`/`actions.ts`;
+routes compose domain components and call domain actions. One deliberate exception:
+`core/db/schema.ts` aggregates every schema file for drizzle-kit.
 
 ## Multi-tenancy readiness
 
@@ -44,6 +51,6 @@ Every domain table carries `user_id` (FK to `users`) and every service function 
 
 ## Domain boundaries
 
-- `modules/sponsors` and `modules/deals` never import from each other's internals — deals reference sponsors only through the FK and the sponsors service interface.
-- Auth lives in `modules/auth` + root `auth.ts`; domain services receive a user id, they never call `auth()` themselves — so a future API-token or webhook caller can invoke the same services.
-- A future `modules/notifications` subscribes to domain events at the action layer; deal logic won't change.
+- Sponsors and deals are one tool — they live together in `domains/tracker`. A second tool becomes a sibling under `domains/`, importing tracker data only via tracker's exported `queries.ts`.
+- Auth lives in `core/auth` + root `auth.ts`; domain queries receive a user id, they never call `auth()` themselves — so a future API-token or webhook caller can invoke the same functions.
+- Tracker-specific UI lives in `domains/tracker/components/`; `src/components/` holds only tool-agnostic UI.

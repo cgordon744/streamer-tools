@@ -3,7 +3,7 @@ import {
   DEAL_STATUS_BADGE_CLASSES,
   DEAL_STATUS_LABELS,
   type DealStatus,
-} from "@/config/deals";
+} from "@/core/config/deals";
 import { cn } from "@/lib/utils";
 
 export function DealStatusBadge({ status }: { status: DealStatus }) {

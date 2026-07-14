@@ -13,7 +13,7 @@ import { ConfirmDeleteDialog } from "@/components/confirm-delete-dialog";
 import {
   DealFormDialog,
   type SponsorOption,
-} from "@/components/deal-form-dialog";
+} from "@/domains/tracker/components/deal-form-dialog";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -29,14 +29,14 @@ import {
   DEAL_STATUS_LABELS,
   DEAL_STATUSES,
   type DealStatus,
-} from "@/config/deals";
+} from "@/core/config/deals";
 import { dueUrgency, formatShortDate, type DueUrgency } from "@/lib/dates";
 import { formatCents } from "@/lib/money";
 import {
   deleteDealAction,
   updateDealStatusAction,
-} from "@/modules/deals/actions";
-import type { DealWithSponsor } from "@/modules/deals/service";
+} from "@/domains/tracker/actions";
+import type { DealWithSponsor } from "@/domains/tracker/queries";
 import { cn } from "@/lib/utils";
 
 export function PipelineBoard({

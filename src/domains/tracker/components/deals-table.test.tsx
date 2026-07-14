@@ -1,13 +1,13 @@
 import { render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 
-import type { DealWithSponsor } from "@/modules/deals/service";
+import type { DealWithSponsor } from "@/domains/tracker/queries";
 
 import { DealsTable } from "./deals-table";
 
 // Server actions import next-auth/db modules that only load inside the Next
 // runtime — stub the module boundary for component tests.
-vi.mock("@/modules/deals/actions", () => ({
+vi.mock("@/domains/tracker/actions", () => ({
   deleteDealAction: vi.fn(),
   updateDealAction: vi.fn(),
   createDealAction: vi.fn(),

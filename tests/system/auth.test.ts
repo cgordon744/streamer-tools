@@ -1,8 +1,8 @@
 import { describe, expect, it } from "vitest";
 
-import { getDb } from "@/db/client";
-import { users } from "@/db/schema";
-import { findUserByEmail } from "@/modules/auth/service";
+import { getDb } from "@/core/db/client";
+import { users } from "@/core/db/schema";
+import { findUserByEmail } from "@/core/auth/service";
 
 describe("auth service", () => {
   it("finds a user regardless of email casing in the query", async () => {

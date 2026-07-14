@@ -1,10 +1,14 @@
-import { and, eq, sql } from "drizzle-orm";
+import { and, asc, eq, sql } from "drizzle-orm";
 
-import type { DealStatus } from "@/config/deals";
-import { getDb } from "@/db/client";
-import { deals, type Deal } from "@/modules/deals/schema";
-import type { DealInput } from "@/modules/deals/validation";
-import { sponsors } from "@/modules/sponsors/schema";
+import type { DealStatus } from "@/core/config/deals";
+import { getDb } from "@/core/db/client";
+import {
+  deals,
+  sponsors,
+  type Deal,
+  type Sponsor,
+} from "@/domains/tracker/schema";
+import type { DealInput, SponsorInput } from "@/domains/tracker/validation";
 
 export type DealWithSponsor = Deal & { sponsorName: string };
 
@@ -124,5 +128,65 @@ export async function deleteDeal(
     .delete(deals)
     .where(and(eq(deals.id, dealId), eq(deals.userId, userId)))
     .returning({ id: deals.id });
+  return deleted.length > 0;
+}
+
+export async function listSponsors(userId: string): Promise<Sponsor[]> {
+  const db = getDb();
+  return db
+    .select()
+    .from(sponsors)
+    .where(eq(sponsors.userId, userId))
+    .orderBy(asc(sponsors.name));
+}
+
+export async function getSponsor(
+  userId: string,
+  sponsorId: string,
+): Promise<Sponsor | null> {
+  const db = getDb();
+  const [sponsor] = await db
+    .select()
+    .from(sponsors)
+    .where(and(eq(sponsors.id, sponsorId), eq(sponsors.userId, userId)))
+    .limit(1);
+  return sponsor ?? null;
+}
+
+export async function createSponsor(
+  userId: string,
+  input: SponsorInput,
+): Promise<Sponsor> {
+  const db = getDb();
+  const [sponsor] = await db
+    .insert(sponsors)
+    .values({ ...input, userId })
+    .returning();
+  return sponsor;
+}
+
+export async function updateSponsor(
+  userId: string,
+  sponsorId: string,
+  input: SponsorInput,
+): Promise<Sponsor | null> {
+  const db = getDb();
+  const [sponsor] = await db
+    .update(sponsors)
+    .set({ ...input, updatedAt: new Date() })
+    .where(and(eq(sponsors.id, sponsorId), eq(sponsors.userId, userId)))
+    .returning();
+  return sponsor ?? null;
+}
+
+export async function deleteSponsor(
+  userId: string,
+  sponsorId: string,
+): Promise<boolean> {
+  const db = getDb();
+  const deleted = await db
+    .delete(sponsors)
+    .where(and(eq(sponsors.id, sponsorId), eq(sponsors.userId, userId)))
+    .returning({ id: sponsors.id });
   return deleted.length > 0;
 }

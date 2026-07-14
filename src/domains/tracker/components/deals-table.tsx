@@ -1,6 +1,6 @@
-import { DealRowActions } from "@/components/deal-row-actions";
-import type { SponsorOption } from "@/components/deal-form-dialog";
-import { DealStatusBadge } from "@/components/deal-status-badge";
+import { DealRowActions } from "@/domains/tracker/components/deal-row-actions";
+import type { SponsorOption } from "@/domains/tracker/components/deal-form-dialog";
+import { DealStatusBadge } from "@/domains/tracker/components/deal-status-badge";
 import {
   Table,
   TableBody,
@@ -9,10 +9,10 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { CONTENT_TYPE_LABELS } from "@/config/deals";
+import { CONTENT_TYPE_LABELS } from "@/core/config/deals";
 import { formatDueDate } from "@/lib/dates";
 import { formatCents } from "@/lib/money";
-import type { DealWithSponsor } from "@/modules/deals/service";
+import type { DealWithSponsor } from "@/domains/tracker/queries";
 
 export function DealsTable({
   deals,

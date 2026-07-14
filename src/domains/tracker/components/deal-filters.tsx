@@ -2,7 +2,7 @@
 
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 
-import type { SponsorOption } from "@/components/deal-form-dialog";
+import type { SponsorOption } from "@/domains/tracker/components/deal-form-dialog";
 import { Button } from "@/components/ui/button";
 import {
   Select,
@@ -11,7 +11,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { DEAL_STATUS_LABELS, DEAL_STATUSES } from "@/config/deals";
+import { DEAL_STATUS_LABELS, DEAL_STATUSES } from "@/core/config/deals";
 
 const ALL = "all";
 

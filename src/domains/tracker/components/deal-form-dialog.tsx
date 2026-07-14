@@ -24,10 +24,10 @@ import {
   CONTENT_TYPES,
   DEAL_STATUS_LABELS,
   DEAL_STATUSES,
-} from "@/config/deals";
+} from "@/core/config/deals";
 import { useFormDialog } from "@/hooks/use-form-dialog";
-import { createDealAction, updateDealAction } from "@/modules/deals/actions";
-import type { Deal } from "@/modules/deals/schema";
+import { createDealAction, updateDealAction } from "@/domains/tracker/actions";
+import type { Deal } from "@/domains/tracker/schema";
 
 export type SponsorOption = { id: string; name: string };
 

@@ -2,7 +2,7 @@ import { CalendarClock, CircleDollarSign, Clock4, Wallet } from "lucide-react";
 
 import { Card } from "@/components/ui/card";
 import { formatCents } from "@/lib/money";
-import type { DealStats } from "@/modules/deals/service";
+import type { DealStats } from "@/domains/tracker/queries";
 
 export function StatCards({ stats }: { stats: DealStats }) {
   const items = [

@@ -8,8 +8,8 @@ import {
   listDeals,
   updateDeal,
   updateDealStatus,
-} from "@/modules/deals/service";
-import { createSponsor, deleteSponsor } from "@/modules/sponsors/service";
+} from "@/domains/tracker/queries";
+import { createSponsor, deleteSponsor } from "@/domains/tracker/queries";
 
 import { createTestUser } from "./helpers";
 

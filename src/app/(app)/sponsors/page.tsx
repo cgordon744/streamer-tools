@@ -6,11 +6,11 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { requireUserId } from "@/modules/auth/session";
-import { listSponsors } from "@/modules/sponsors/service";
+import { requireUserId } from "@/core/auth/session";
+import { listSponsors } from "@/domains/tracker/queries";
 
-import { SponsorFormDialog } from "./sponsor-form-dialog";
-import { SponsorRowActions } from "./sponsor-row-actions";
+import { SponsorFormDialog } from "@/domains/tracker/components/sponsor-form-dialog";
+import { SponsorRowActions } from "@/domains/tracker/components/sponsor-row-actions";
 
 export const metadata = {
   title: "Sponsors — Streamer Tools",

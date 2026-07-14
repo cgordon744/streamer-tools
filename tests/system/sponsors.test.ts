@@ -6,7 +6,7 @@ import {
   getSponsor,
   listSponsors,
   updateSponsor,
-} from "@/modules/sponsors/service";
+} from "@/domains/tracker/queries";
 
 import { createTestUser } from "./helpers";
 

@@ -1,12 +1,12 @@
-import { DealFormDialog } from "@/components/deal-form-dialog";
-import { PipelineBoard } from "@/components/pipeline-board";
-import { StatCards } from "@/components/stat-cards";
+import { DealFormDialog } from "@/domains/tracker/components/deal-form-dialog";
+import { PipelineBoard } from "@/domains/tracker/components/pipeline-board";
+import { StatCards } from "@/domains/tracker/components/stat-cards";
 import { todayIso } from "@/lib/dates";
-import { requireUserId } from "@/modules/auth/session";
-import { getDealStats, listDeals } from "@/modules/deals/service";
-import { listSponsors } from "@/modules/sponsors/service";
+import { requireUserId } from "@/core/auth/session";
+import { getDealStats, listDeals } from "@/domains/tracker/queries";
+import { listSponsors } from "@/domains/tracker/queries";
 
-import { DealFilters } from "./deal-filters";
+import { DealFilters } from "@/domains/tracker/components/deal-filters";
 
 export const metadata = {
   title: "Dashboard — Streamer Tools",

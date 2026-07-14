@@ -7,6 +7,6 @@ import { TEST_DATABASE_URL } from "./test-db";
 process.env.DATABASE_URL = TEST_DATABASE_URL;
 
 afterAll(async () => {
-  const { closeDb } = await import("@/db/client");
+  const { closeDb } = await import("@/core/db/client");
   await closeDb();
 });

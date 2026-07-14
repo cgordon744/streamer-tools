@@ -1,6 +1,6 @@
 import NextAuth from "next-auth";
 
-import { authConfig } from "@/modules/auth/config";
+import { authConfig } from "@/core/auth/config";
 
 // Route protection at the edge using the db-free config. Unauthenticated
 // requests are redirected to /login by the `authorized` callback.

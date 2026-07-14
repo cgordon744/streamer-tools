@@ -7,16 +7,22 @@ import {
   actionSuccess,
   type ActionResult,
 } from "@/lib/action-result";
-import { requireUserId } from "@/modules/auth/session";
-import { getSponsor } from "@/modules/sponsors/service";
-import { DEAL_STATUS_LABELS } from "@/config/deals";
+import { requireUserId } from "@/core/auth/session";
+import { DEAL_STATUS_LABELS } from "@/core/config/deals";
 import {
   createDeal,
+  createSponsor,
   deleteDeal,
+  deleteSponsor,
+  getSponsor,
   updateDeal,
   updateDealStatus,
-} from "@/modules/deals/service";
-import { dealInputSchema } from "@/modules/deals/validation";
+  updateSponsor,
+} from "@/domains/tracker/queries";
+import {
+  dealInputSchema,
+  sponsorInputSchema,
+} from "@/domains/tracker/validation";
 
 function parseDealForm(formData: FormData) {
   return dealInputSchema.safeParse({
@@ -104,4 +110,66 @@ export async function deleteDealAction(dealId: string): Promise<ActionResult> {
   }
   revalidateDealPages();
   return actionSuccess("Deal deleted");
+}
+
+function parseSponsorForm(formData: FormData) {
+  return sponsorInputSchema.safeParse({
+    name: formData.get("name"),
+    contactName: formData.get("contactName"),
+    contactEmail: formData.get("contactEmail"),
+    notes: formData.get("notes"),
+  });
+}
+
+// Sponsors appear on their own page and in dashboard filter options.
+function revalidateSponsorPages() {
+  revalidatePath("/sponsors");
+  revalidatePath("/");
+}
+
+export async function createSponsorAction(
+  _prevState: ActionResult | undefined,
+  formData: FormData,
+): Promise<ActionResult> {
+  const userId = await requireUserId();
+  const parsed = parseSponsorForm(formData);
+  if (!parsed.success) {
+    return actionError(parsed.error.issues[0].message);
+  }
+  await createSponsor(userId, parsed.data);
+  revalidateSponsorPages();
+  return actionSuccess("Sponsor created");
+}
+
+export async function updateSponsorAction(
+  _prevState: ActionResult | undefined,
+  formData: FormData,
+): Promise<ActionResult> {
+  const userId = await requireUserId();
+  const sponsorId = formData.get("id");
+  if (typeof sponsorId !== "string" || !sponsorId) {
+    return actionError("Missing sponsor id");
+  }
+  const parsed = parseSponsorForm(formData);
+  if (!parsed.success) {
+    return actionError(parsed.error.issues[0].message);
+  }
+  const updated = await updateSponsor(userId, sponsorId, parsed.data);
+  if (!updated) {
+    return actionError("Sponsor not found");
+  }
+  revalidateSponsorPages();
+  return actionSuccess("Sponsor updated");
+}
+
+export async function deleteSponsorAction(
+  sponsorId: string,
+): Promise<ActionResult> {
+  const userId = await requireUserId();
+  const deleted = await deleteSponsor(userId, sponsorId);
+  if (!deleted) {
+    return actionError("Sponsor not found");
+  }
+  revalidateSponsorPages();
+  return actionSuccess("Sponsor deleted");
 }

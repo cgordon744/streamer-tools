@@ -1,7 +1,7 @@
 import { LogOut } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
-import { logout } from "@/modules/auth/actions";
+import { logout } from "@/core/auth/actions";
 
 export function SignOutButton() {
   return (

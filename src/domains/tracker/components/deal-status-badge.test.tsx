@@ -1,7 +1,7 @@
 import { render, screen } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 
-import { DEAL_STATUSES } from "@/config/deals";
+import { DEAL_STATUSES } from "@/core/config/deals";
 
 import { DealStatusBadge } from "./deal-status-badge";
 

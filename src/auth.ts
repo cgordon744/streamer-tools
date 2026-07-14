@@ -2,9 +2,9 @@ import NextAuth from "next-auth";
 import Credentials from "next-auth/providers/credentials";
 import { z } from "zod";
 
-import { authConfig } from "@/modules/auth/config";
-import { verifyPassword } from "@/modules/auth/password";
-import { findUserByEmail } from "@/modules/auth/service";
+import { authConfig } from "@/core/auth/config";
+import { verifyPassword } from "@/core/auth/password";
+import { findUserByEmail } from "@/core/auth/service";
 
 const credentialsSchema = z.object({
   email: z.string().email(),

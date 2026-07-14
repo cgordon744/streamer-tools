@@ -16,8 +16,8 @@ import { useFormDialog } from "@/hooks/use-form-dialog";
 import {
   createSponsorAction,
   updateSponsorAction,
-} from "@/modules/sponsors/actions";
-import type { Sponsor } from "@/modules/sponsors/schema";
+} from "@/domains/tracker/actions";
+import type { Sponsor } from "@/domains/tracker/schema";
 
 // Uncontrolled (renders its own trigger button) unless `open`/`onOpenChange`
 // are passed — controlled mode is used by the row actions dropdown.

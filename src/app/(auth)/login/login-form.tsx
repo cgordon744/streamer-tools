@@ -12,7 +12,7 @@ import {
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { authenticate } from "@/modules/auth/actions";
+import { authenticate } from "@/core/auth/actions";
 
 export function LoginForm() {
   const [errorMessage, formAction, isPending] = useActionState(

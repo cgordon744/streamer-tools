@@ -2,7 +2,7 @@ import { cookies } from "next/headers";
 
 import { ModeToggle } from "@/components/mode-toggle";
 import { Toaster } from "@/components/ui/sonner";
-import { requireUserId } from "@/modules/auth/session";
+import { requireUserId } from "@/core/auth/session";
 
 import { AppNav } from "./app-nav";
 import { AppSidebar, SIDEBAR_DEFAULT_WIDTH } from "./app-sidebar";

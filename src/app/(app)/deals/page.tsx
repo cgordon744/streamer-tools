@@ -1,11 +1,11 @@
-import { DealFormDialog } from "@/components/deal-form-dialog";
-import { DealsTable } from "@/components/deals-table";
-import { DEAL_STATUSES, type DealStatus } from "@/config/deals";
-import { requireUserId } from "@/modules/auth/session";
-import { listDeals } from "@/modules/deals/service";
-import { listSponsors } from "@/modules/sponsors/service";
+import { DealFormDialog } from "@/domains/tracker/components/deal-form-dialog";
+import { DealsTable } from "@/domains/tracker/components/deals-table";
+import { DEAL_STATUSES, type DealStatus } from "@/core/config/deals";
+import { requireUserId } from "@/core/auth/session";
+import { listDeals } from "@/domains/tracker/queries";
+import { listSponsors } from "@/domains/tracker/queries";
 
-import { DealFilters } from "../deal-filters";
+import { DealFilters } from "@/domains/tracker/components/deal-filters";
 
 export const metadata = {
   title: "Deals — Streamer Tools",

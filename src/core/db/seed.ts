@@ -1,6 +1,6 @@
 import "dotenv/config";
 
-import { hashPassword } from "@/modules/auth/password";
+import { hashPassword } from "@/core/auth/password";
 
 import { getDb } from "./client";
 import { users } from "./schema";

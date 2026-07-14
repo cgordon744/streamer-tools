@@ -1,5 +1,5 @@
-import { getDb } from "@/db/client";
-import { users } from "@/db/schema";
+import { getDb } from "@/core/db/client";
+import { users } from "@/core/db/schema";
 
 let counter = 0;
 
