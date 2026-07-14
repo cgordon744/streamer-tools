@@ -18,7 +18,7 @@ const deal: DealWithSponsor = {
   userId: "22222222-2222-4222-8222-222222222222",
   sponsorId: "33333333-3333-4333-8333-333333333333",
   sponsorName: "NordVPN",
-  status: "signed",
+  status: "contract_signed",
   amountCents: 250000,
   contentType: "video",
   deliverableDueDate: "2026-07-20",
@@ -26,6 +26,7 @@ const deal: DealWithSponsor = {
   notes: null,
   createdAt: new Date("2026-07-01T00:00:00Z"),
   updatedAt: new Date("2026-07-01T00:00:00Z"),
+  deletedAt: null,
 };
 
 describe("DealsTable", () => {
@@ -45,7 +46,7 @@ describe("DealsTable", () => {
     );
 
     expect(screen.getByText("NordVPN")).toBeTruthy();
-    expect(screen.getByText("Signed")).toBeTruthy();
+    expect(screen.getByText("Contract Signed")).toBeTruthy();
     expect(screen.getByText("Video")).toBeTruthy();
     expect(screen.getByText("$2,500.00")).toBeTruthy();
     expect(screen.getByText("Jul 20, 2026")).toBeTruthy();

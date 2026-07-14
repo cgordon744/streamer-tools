@@ -7,7 +7,7 @@ const SPONSOR_ID = "6a46993c-4ffd-42d5-a412-6a966240dcfb";
 function baseInput(overrides: Record<string, unknown> = {}) {
   return {
     sponsorId: SPONSOR_ID,
-    status: "pitched",
+    status: "lead",
     amount: "1,500.00",
     contentType: "video",
     deliverableDueDate: "",

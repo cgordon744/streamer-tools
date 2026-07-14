@@ -24,10 +24,12 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import {
+  CONTENT_DONE_STATUSES,
   CONTENT_TYPE_LABELS,
   DEAL_STATUS_DOT_CLASSES,
   DEAL_STATUS_LABELS,
   DEAL_STATUSES,
+  TERMINAL_DEAL_STATUSES,
   type DealStatus,
 } from "@/core/config/deals";
 import { dueUrgency, formatShortDate, type DueUrgency } from "@/lib/dates";
@@ -245,7 +247,10 @@ function DealCard({
                 icon={Clapperboard}
                 isoDate={deal.deliverableDueDate}
                 today={today}
-                muted={deal.status === "delivered" || deal.status === "paid"}
+                muted={
+                  CONTENT_DONE_STATUSES.includes(deal.status) ||
+                  deal.status === "dead"
+                }
               />
             ) : null}
             {deal.paymentDueDate ? (
@@ -253,7 +258,7 @@ function DealCard({
                 icon={Wallet}
                 isoDate={deal.paymentDueDate}
                 today={today}
-                muted={deal.status === "paid"}
+                muted={TERMINAL_DEAL_STATUSES.includes(deal.status)}
               />
             ) : null}
           </div>

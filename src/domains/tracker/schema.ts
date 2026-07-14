@@ -2,7 +2,6 @@ import {
   date,
   index,
   integer,
-  pgEnum,
   pgTable,
   text,
   timestamp,
@@ -10,13 +9,10 @@ import {
 } from "drizzle-orm/pg-core";
 
 import { users } from "@/core/auth/schema";
-import { CONTENT_TYPES, DEAL_STATUSES } from "@/core/config/deals";
-
-export const dealStatusEnum = pgEnum("deal_status", DEAL_STATUSES);
-export const contentTypeEnum = pgEnum("content_type", CONTENT_TYPES);
+import type { ContentType, DealStatus } from "@/core/config/deals";
 
 export const sponsors = pgTable(
-  "sponsors",
+  "tracker_sponsors",
   {
     id: uuid("id").primaryKey().defaultRandom(),
     // Multi-tenancy: every row is owned by a user; all queries scope by this.
@@ -33,14 +29,17 @@ export const sponsors = pgTable(
     updatedAt: timestamp("updated_at", { withTimezone: true })
       .notNull()
       .defaultNow(),
+    // Soft delete (CHASSIS_SPEC §3): rows are flagged, never dropped —
+    // creators ask for things back. All reads filter on this being null.
+    deletedAt: timestamp("deleted_at", { withTimezone: true }),
   },
-  (table) => [index("sponsors_user_id_idx").on(table.userId)],
+  (table) => [index("tracker_sponsors_user_id_idx").on(table.userId)],
 );
 
 export type Sponsor = typeof sponsors.$inferSelect;
 
 export const deals = pgTable(
-  "deals",
+  "tracker_deals",
   {
     id: uuid("id").primaryKey().defaultRandom(),
     // Multi-tenancy: every row is owned by a user; all queries scope by this.
@@ -50,10 +49,12 @@ export const deals = pgTable(
     sponsorId: uuid("sponsor_id")
       .notNull()
       .references(() => sponsors.id, { onDelete: "cascade" }),
-    status: dealStatusEnum("status").notNull().default("pitched"),
+    // Plain text, not a DB enum (CHASSIS_SPEC §4) — the value set lives in
+    // /core/config/deals.ts and is enforced by zod at the action boundary.
+    status: text("status").$type<DealStatus>().notNull().default("lead"),
     // Money as integer cents — exact arithmetic, no float drift.
     amountCents: integer("amount_cents").notNull(),
-    contentType: contentTypeEnum("content_type").notNull(),
+    contentType: text("content_type").$type<ContentType>().notNull(),
     deliverableDueDate: date("deliverable_due_date"),
     paymentDueDate: date("payment_due_date"),
     notes: text("notes"),
@@ -63,10 +64,13 @@ export const deals = pgTable(
     updatedAt: timestamp("updated_at", { withTimezone: true })
       .notNull()
       .defaultNow(),
+    // Soft delete (CHASSIS_SPEC §3): rows are flagged, never dropped —
+    // creators ask for things back. All reads filter on this being null.
+    deletedAt: timestamp("deleted_at", { withTimezone: true }),
   },
   (table) => [
-    index("deals_user_id_idx").on(table.userId),
-    index("deals_sponsor_id_idx").on(table.sponsorId),
+    index("tracker_deals_user_id_idx").on(table.userId),
+    index("tracker_deals_sponsor_id_idx").on(table.sponsorId),
   ],
 );
 

@@ -29,7 +29,7 @@ const sponsorInput = {
 function dealInput(sponsorId: string, overrides = {}) {
   return {
     sponsorId,
-    status: "pitched" as const,
+    status: "lead" as const,
     amount: 100000,
     contentType: "video" as const,
     deliverableDueDate: null,
@@ -52,7 +52,7 @@ describe("deal service", () => {
 
   it("creates a deal and returns it with the sponsor name in lists", async () => {
     const deal = await createDeal(userA, dealInput(sponsorA));
-    expect(deal.status).toBe("pitched");
+    expect(deal.status).toBe("lead");
     expect(deal.amountCents).toBe(100000);
 
     const listed = await listDeals(userA);
@@ -73,8 +73,8 @@ describe("deal service", () => {
 
   it("moves a deal through the pipeline", async () => {
     const deal = await createDeal(userA, dealInput(sponsorA));
-    const moved = await updateDealStatus(userA, deal.id, "signed");
-    expect(moved?.status).toBe("signed");
+    const moved = await updateDealStatus(userA, deal.id, "contract_signed");
+    expect(moved?.status).toBe("contract_signed");
   });
 
   it("filters by status and sponsor", async () => {
@@ -82,10 +82,10 @@ describe("deal service", () => {
     const s1 = (await createSponsor(user, sponsorInput)).id;
     const s2 = (await createSponsor(user, { ...sponsorInput, name: "Beta" }))
       .id;
-    await createDeal(user, dealInput(s1, { status: "signed" }));
+    await createDeal(user, dealInput(s1, { status: "contract_signed" }));
     await createDeal(user, dealInput(s2, { status: "paid" }));
 
-    const signed = await listDeals(user, { status: "signed" });
+    const signed = await listDeals(user, { status: "contract_signed" });
     expect(signed).toHaveLength(1);
     expect(signed[0].sponsorId).toBe(s1);
 
@@ -114,11 +114,11 @@ describe("deal service", () => {
   it("computes pipeline stats", async () => {
     const user = await createTestUser();
     const sponsor = (await createSponsor(user, sponsorInput)).id;
-    await createDeal(user, dealInput(sponsor, { status: "pitched", amount: 100 }));
+    await createDeal(user, dealInput(sponsor, { status: "lead", amount: 100 }));
     await createDeal(
       user,
       dealInput(sponsor, {
-        status: "delivered",
+        status: "content_delivered",
         amount: 200,
         paymentDueDate: isoDaysFromToday(3),
       }),
@@ -126,7 +126,7 @@ describe("deal service", () => {
     await createDeal(user, dealInput(sponsor, { status: "paid", amount: 400 }));
 
     const stats = await getDealStats(user);
-    expect(stats.pipelineCents).toBe(300); // pitched + delivered
+    expect(stats.pipelineCents).toBe(300); // lead + content_delivered
     expect(stats.awaitingPaymentCents).toBe(200);
     expect(stats.paidCents).toBe(400);
     expect(stats.dueSoonCount).toBe(1);
@@ -167,7 +167,7 @@ describe("deal service", () => {
       const stillThere = await listDeals(userA);
       const unchanged = stillThere.find((d) => d.id === deal.id);
       expect(unchanged?.amountCents).toBe(100000);
-      expect(unchanged?.status).toBe("pitched");
+      expect(unchanged?.status).toBe("lead");
     });
 
     it("keeps stats scoped to the acting user", async () => {

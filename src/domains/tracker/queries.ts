@@ -1,4 +1,4 @@
-import { and, asc, eq, sql } from "drizzle-orm";
+import { and, asc, eq, isNull, sql } from "drizzle-orm";
 
 import type { DealStatus } from "@/core/config/deals";
 import { getDb } from "@/core/db/client";
@@ -19,6 +19,7 @@ export type DealFilters = {
 
 // All functions take the acting user's id and scope every query with it.
 // This module is the only place deal persistence is touched.
+// Deletes are soft (deletedAt) — every read filters them out.
 
 // Nearest upcoming deadline = the earlier of the two due dates (Postgres
 // LEAST ignores NULLs); deals with no dates sort last.
@@ -29,7 +30,7 @@ export async function listDeals(
   filters: DealFilters = {},
 ): Promise<DealWithSponsor[]> {
   const db = getDb();
-  const conditions = [eq(deals.userId, userId)];
+  const conditions = [eq(deals.userId, userId), isNull(deals.deletedAt)];
   if (filters.status) {
     conditions.push(eq(deals.status, filters.status));
   }
@@ -48,6 +49,25 @@ export async function listDeals(
     );
 
   return rows.map((row) => ({ ...row.deal, sponsorName: row.sponsorName }));
+}
+
+export async function getDeal(
+  userId: string,
+  dealId: string,
+): Promise<Deal | null> {
+  const db = getDb();
+  const [deal] = await db
+    .select()
+    .from(deals)
+    .where(
+      and(
+        eq(deals.id, dealId),
+        eq(deals.userId, userId),
+        isNull(deals.deletedAt),
+      ),
+    )
+    .limit(1);
+  return deal ?? null;
 }
 
 export async function createDeal(
@@ -73,7 +93,13 @@ export async function updateDeal(
   const [deal] = await db
     .update(deals)
     .set({ ...rest, amountCents: amount, updatedAt: new Date() })
-    .where(and(eq(deals.id, dealId), eq(deals.userId, userId)))
+    .where(
+      and(
+        eq(deals.id, dealId),
+        eq(deals.userId, userId),
+        isNull(deals.deletedAt),
+      ),
+    )
     .returning();
   return deal ?? null;
 }
@@ -87,7 +113,13 @@ export async function updateDealStatus(
   const [deal] = await db
     .update(deals)
     .set({ status, updatedAt: new Date() })
-    .where(and(eq(deals.id, dealId), eq(deals.userId, userId)))
+    .where(
+      and(
+        eq(deals.id, dealId),
+        eq(deals.userId, userId),
+        isNull(deals.deletedAt),
+      ),
+    )
     .returning();
   return deal ?? null;
 }
@@ -103,13 +135,13 @@ export async function getDealStats(userId: string): Promise<DealStats> {
   const db = getDb();
   const [row] = await db
     .select({
-      pipelineCents: sql<string>`coalesce(sum(${deals.amountCents}) filter (where ${deals.status} <> 'paid'), 0)`,
-      awaitingPaymentCents: sql<string>`coalesce(sum(${deals.amountCents}) filter (where ${deals.status} = 'delivered'), 0)`,
+      pipelineCents: sql<string>`coalesce(sum(${deals.amountCents}) filter (where ${deals.status} not in ('paid', 'dead')), 0)`,
+      awaitingPaymentCents: sql<string>`coalesce(sum(${deals.amountCents}) filter (where ${deals.status} in ('content_delivered', 'invoiced')), 0)`,
       paidCents: sql<string>`coalesce(sum(${deals.amountCents}) filter (where ${deals.status} = 'paid'), 0)`,
-      dueSoonCount: sql<string>`count(*) filter (where ${deals.status} <> 'paid' and ${nearestDeadline} between current_date and current_date + 7)`,
+      dueSoonCount: sql<string>`count(*) filter (where ${deals.status} not in ('paid', 'dead') and ${nearestDeadline} between current_date and current_date + 7)`,
     })
     .from(deals)
-    .where(eq(deals.userId, userId));
+    .where(and(eq(deals.userId, userId), isNull(deals.deletedAt)));
 
   return {
     pipelineCents: Number(row.pipelineCents),
@@ -125,8 +157,15 @@ export async function deleteDeal(
 ): Promise<boolean> {
   const db = getDb();
   const deleted = await db
-    .delete(deals)
-    .where(and(eq(deals.id, dealId), eq(deals.userId, userId)))
+    .update(deals)
+    .set({ deletedAt: new Date(), updatedAt: new Date() })
+    .where(
+      and(
+        eq(deals.id, dealId),
+        eq(deals.userId, userId),
+        isNull(deals.deletedAt),
+      ),
+    )
     .returning({ id: deals.id });
   return deleted.length > 0;
 }
@@ -136,7 +175,7 @@ export async function listSponsors(userId: string): Promise<Sponsor[]> {
   return db
     .select()
     .from(sponsors)
-    .where(eq(sponsors.userId, userId))
+    .where(and(eq(sponsors.userId, userId), isNull(sponsors.deletedAt)))
     .orderBy(asc(sponsors.name));
 }
 
@@ -148,7 +187,13 @@ export async function getSponsor(
   const [sponsor] = await db
     .select()
     .from(sponsors)
-    .where(and(eq(sponsors.id, sponsorId), eq(sponsors.userId, userId)))
+    .where(
+      and(
+        eq(sponsors.id, sponsorId),
+        eq(sponsors.userId, userId),
+        isNull(sponsors.deletedAt),
+      ),
+    )
     .limit(1);
   return sponsor ?? null;
 }
@@ -174,7 +219,13 @@ export async function updateSponsor(
   const [sponsor] = await db
     .update(sponsors)
     .set({ ...input, updatedAt: new Date() })
-    .where(and(eq(sponsors.id, sponsorId), eq(sponsors.userId, userId)))
+    .where(
+      and(
+        eq(sponsors.id, sponsorId),
+        eq(sponsors.userId, userId),
+        isNull(sponsors.deletedAt),
+      ),
+    )
     .returning();
   return sponsor ?? null;
 }
@@ -184,9 +235,31 @@ export async function deleteSponsor(
   sponsorId: string,
 ): Promise<boolean> {
   const db = getDb();
+  // Soft-delete the sponsor and its deals together (mirrors the old FK
+  // cascade); both stay recoverable.
   const deleted = await db
-    .delete(sponsors)
-    .where(and(eq(sponsors.id, sponsorId), eq(sponsors.userId, userId)))
+    .update(sponsors)
+    .set({ deletedAt: new Date(), updatedAt: new Date() })
+    .where(
+      and(
+        eq(sponsors.id, sponsorId),
+        eq(sponsors.userId, userId),
+        isNull(sponsors.deletedAt),
+      ),
+    )
     .returning({ id: sponsors.id });
-  return deleted.length > 0;
+  if (deleted.length === 0) {
+    return false;
+  }
+  await db
+    .update(deals)
+    .set({ deletedAt: new Date(), updatedAt: new Date() })
+    .where(
+      and(
+        eq(deals.sponsorId, sponsorId),
+        eq(deals.userId, userId),
+        isNull(deals.deletedAt),
+      ),
+    );
+  return true;
 }

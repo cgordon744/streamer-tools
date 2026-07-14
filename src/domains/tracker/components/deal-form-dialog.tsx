@@ -99,7 +99,7 @@ export function DealFormDialog({
               <Label htmlFor="deal-status">Status</Label>
               <Select
                 name="status"
-                defaultValue={deal?.status ?? "pitched"}
+                defaultValue={deal?.status ?? "lead"}
                 required
               >
                 <SelectTrigger id="deal-status" className="w-full">

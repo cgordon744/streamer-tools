@@ -8,6 +8,20 @@
       "when": 1783383223926,
       "tag": "0000_marvelous_professor_monster",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1783988504738,
+      "tag": "0001_workable_wonder_man",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1783989008827,
+      "tag": "0002_tracker_prefix_soft_delete",
+      "breakpoints": true
     }
   ]
 }

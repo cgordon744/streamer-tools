@@ -16,11 +16,13 @@ describe("DealStatusBadge", () => {
     );
 
     for (const label of [
-      "Pitched",
+      "Lead",
       "Negotiating",
-      "Signed",
-      "Delivered",
+      "Contract Signed",
+      "Content Delivered",
+      "Invoiced",
       "Paid",
+      "Dead",
     ]) {
       expect(screen.getByText(label)).toBeTruthy();
     }
