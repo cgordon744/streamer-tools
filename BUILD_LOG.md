@@ -64,3 +64,28 @@ _(No open items — MVP definition of done met.)_
 - **What:** Swapped the Dashboard nav icon from lucide `Kanban` (reads as a sideways/rotated glyph) to `LayoutDashboard`. Made the sidebar collapsible to a 64px icon rail (toggle button, labels hide via `group-data-[state=collapsed]` CSS so server-rendered children need no context) and drag-resizable (200–340px, right-edge handle, double-click resets to 240). Both persist in cookies read by the server layout — correct width/state on first paint, no flash. Mobile keeps the full-width top bar via `max-md:w-full!` overriding the inline width.
 - **Verified:** collapse/expand + label hiding, cookie persistence across reload, drag resize (240→300 persisted), double-click reset, mobile top bar unaffected.
 - **Note:** the local preview browser's renderer freezes CSS transitions and animations (also causes its screenshot timeouts and a zero-size initial viewport) — width changes had to be verified with transitions disabled. Real browsers are unaffected; worth remembering when driving this preview tool.
+
+### 2026-07-13 — Founding decisions (pre-code, appended from portfolio kickoff)
+
+**Context:** Portfolio model adopted (Creator Ops Portfolio) after evaluating three business models enabled by AI-speed development. Test case: YouTube sponsor tracker as wedge tool. (These decisions predate this repo's code; appended today as the portfolio docs landed in `docs/`.)
+
+**Decisions:**
+
+1. **Business model: portfolio of small tools, one buyer, one bundle.** Alternatives considered: segment-of-one custom SaaS (rejected: requires sales conversations, slower feedback), velocity-flywheel single product (rejected for now: depends heavily on existing audience). Portfolio chosen because individual tool risk is smallest and the demo-test filter matches available distribution channels.
+2. **Selection filter: the 60-second demo test**, audience = working creators, never aspiring founders. See `docs/PORTFOLIO_THESIS.md` §3, §7.
+3. **Pricing: single bundle, $20–30/mo, no per-tool pricing.** Reasoning in thesis §4 (churn decision points, umbrella effect, data-loop adoption).
+4. **Free tier by the artifact rule:** outward-traveling artifacts free, private workflow paid. Cold-start rule adopted: free tools must deliver full value from public/user-entered data on first use; bundle data enhances, never gates. Prompted by the media-kit cold-start question — resolved via YouTube API channel stats + manual fields. Thesis §5.
+5. **Kill discipline: pre-committed thresholds per tool, 60-day window, freeze as default outcome.** Thesis §6.
+6. **Chassis stack locked:** Next.js 14 App Router, TypeScript strict, Tailwind + shadcn, Drizzle, Neon Postgres, Auth.js v5, Stripe, Vercel. Single repo, domain-module architecture with import boundary rules. `docs/CHASSIS_SPEC.md`.
+7. **Target buyer definition:** solo creators, ~10K–500K subs as proxy, deal activity (1–10/quarter) as true qualifier. Open question logged (thesis §8) on formalizing by deal volume.
+
+**Next actions:**
+- [x] Write the tracker spec (wedge tool) — `spec/tracker-spec.md`
+- [x] Chassis scaffold — superseded: the tracker MVP was built first (sessions above); the 2026-07-13 session aligns it to the chassis instead
+
+### 2026-07-13 — Chassis audit (Phase 1)
+
+- **What:** Audited the MVP against `docs/CHASSIS_SPEC.md` → `docs/AUDIT.md`. Headline: structure and instincts are chassis-shaped (thin routes, module layer, userId scoping everywhere, config file for statuses) but drifted on layout (`modules/*` flat vs `/domains/tracker` + `/core`), tracker UI in shared `components/`, unprefixed table names, no soft deletes, statuses persisted as Postgres enums (chassis §4 forbids), no entitlements, no instrumentation. Deployment health verified pre-change: typecheck/lint/build green, 51/51 unit+component tests, live app serving.
+- **Chassis-level decision (stack table):** the repo runs **Next.js 16.2**, not the 14 in CHASSIS_SPEC §1. Scaffold choice was logged 2026-07-06; app is built, tested, and deployed on 16. Downgrading is pure risk; **treating Next 16 as the chassis standard** — CHASSIS_SPEC §1 should read "Next.js 16 App Router". Per §1's own rule, this entry is that decision's log.
+- **Touched /core or boundaries?** No (audit only).
+- **Next:** Phase 2 alignment — restructure, enum→text migration (+ stage remap to spec §6 list), table renames, soft deletes, `hasAccess` stub, events table.
