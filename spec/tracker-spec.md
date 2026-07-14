@@ -75,11 +75,12 @@ The tracker is the portfolio's primary data *producer* — the root of the loop.
 
 ## 8. Launch Checklist
 
-- [ ] Domain follows chassis boundary rules (CHASSIS_SPEC §2)
-- [ ] Activation/retention instrumentation live (CHASSIS_SPEC §7)
+- [x] Domain follows chassis boundary rules (CHASSIS_SPEC §2) — 2026-07-14, see docs/AUDIT.md + BUILD_LOG Phase 2 entry
+- [x] Activation/retention instrumentation live (CHASSIS_SPEC §7) — events table + trackEvent, 2026-07-14
 - [ ] ~~Cold-start test~~ (n/a — paid tool)
 - [ ] Demo recorded (§2 script, executed)
 - [ ] Feature flag flipped · date logged in BUILD_LOG.md
+- [ ] Email reminders live (blocked on NEEDS INPUT: RESEND_API_KEY + CRON_SECRET; stub in place)
 
 ## 9. Evaluation Record (fill at +60d)
 

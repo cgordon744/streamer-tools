@@ -108,3 +108,17 @@
   - **Reminder cron:** `vercel.json` cron (daily 14:00 UTC) → `/api/cron/reminders` (excluded from session auth; `CRON_SECRET` Bearer check, refuses unauthenticated prod runs). Logic in `domains/tracker/reminders.ts` is stateless/idempotent-per-day: deliverable reminder fires when due date is exactly 2 days out; overdue-payment reminder on day 1 past due then weekly — no sent-log table needed. Sender behind `core/email/sender.ts` interface: Resend implementation ready but gated by `EMAIL_REMINDERS_ENABLED` flag + `RESEND_API_KEY`; console stub otherwise. **See NEEDS INPUT #1–2.**
 - **Touched /core or boundaries?** Yes: `/core/email` (sender interface) and `/core/config/flags.ts` (feature flags, chassis §7) added; payment-status enums joined `/core/config/deals.ts`; proxy matcher now excludes `api/cron`.
 - **Scope note:** committed as one feature commit rather than four — the changes share `queries.ts`/`schema.ts`/board files, and splitting would have produced intermediate states needing their own verification. Cron is separate.
+
+## End-of-session summary (2026-07-14, chassis-alignment + spec-delta session)
+
+**Done and verified:**
+- **Phase 1 (audit):** `docs/AUDIT.md` — MVP mapped against CHASSIS_SPEC; committed before any change.
+- **Phase 2 (align):** `/domains/tracker` + `/core` layout with boundary rules; DB enums → config-driven text with stage remap to the spec list (7 stages incl. Invoiced/Dead); `tracker_*` table prefixes; soft deletes everywhere; `hasAccess()` entitlement stub gating all tracker pages; internal `events` instrumentation (signup / deal_created / deal_stage_changed / daily active heartbeat).
+- **Phase 3 (extend):** payment status + computed overdue detection with red kanban banner + strip alert (the hero); spec dashboard strip (active · in flight · overdue · next deliverable); per-deal deliverables checklist with due dates in a card-click details dialog; exported data contract (`getVerifiedSponsors` / `getDealHistory` / `getPayableDeals`); daily reminder cron with stubbed sender behind a provider interface + feature flag.
+- **Quality gates:** typecheck, lint, 52 unit/component + 21 system tests green; every flow exercised in a driven browser locally (overdue banner, strip alert, checklist add/toggle, stage-move payment sync, cron stub email, event rows in DB).
+
+**Live:** all five migrations applied to Neon via the new migrate-on-deploy release step; both deploys (Phase 2, Phase 3) succeeded first try; login page + cron guard verified in prod. **Not verified in prod:** the authenticated UI walkthrough — the prod password differs from local dev, so one manual login-and-look by the founder is wanted (the deployed code/schema are exactly what was verified locally).
+
+**Broken:** nothing known. The reminder cron in prod intentionally returns 503 until `CRON_SECRET` is set (NEEDS INPUT #2).
+
+**Next session:** 1) resolve NEEDS INPUT #1–2 (Resend key + flag, CRON_SECRET) to turn on real reminder emails; 2) founder walkthrough of the live app; 3) record the 60-second demo (spec §2) and consider the launch checklist; 4) parked ideas: deal title field, sponsor detail page, pagination, restore-deleted UI (soft deletes make it possible), boundary-enforcing lint rule when domain #2 lands.
