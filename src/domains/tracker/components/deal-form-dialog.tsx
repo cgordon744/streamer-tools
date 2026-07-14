@@ -24,6 +24,8 @@ import {
   CONTENT_TYPES,
   DEAL_STATUS_LABELS,
   DEAL_STATUSES,
+  PAYMENT_STATUS_LABELS,
+  PAYMENT_STATUSES,
 } from "@/core/config/deals";
 import { useFormDialog } from "@/hooks/use-form-dialog";
 import { createDealAction, updateDealAction } from "@/domains/tracker/actions";
@@ -135,16 +137,37 @@ export function DealFormDialog({
             </div>
           </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="deal-amount">Amount (USD)</Label>
-            <Input
-              id="deal-amount"
-              name="amount"
-              inputMode="decimal"
-              placeholder="1,500.00"
-              defaultValue={deal ? (deal.amountCents / 100).toFixed(2) : ""}
-              required
-            />
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="deal-amount">Amount (USD)</Label>
+              <Input
+                id="deal-amount"
+                name="amount"
+                inputMode="decimal"
+                placeholder="1,500.00"
+                defaultValue={deal ? (deal.amountCents / 100).toFixed(2) : ""}
+                required
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="deal-payment-status">Payment</Label>
+              <Select
+                name="paymentStatus"
+                defaultValue={deal?.paymentStatus ?? "not_invoiced"}
+                required
+              >
+                <SelectTrigger id="deal-payment-status" className="w-full">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {PAYMENT_STATUSES.map((status) => (
+                    <SelectItem key={status} value={status}>
+                      {PAYMENT_STATUS_LABELS[status]}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
           </div>
 
           <div className="grid grid-cols-2 gap-4">

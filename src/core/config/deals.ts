@@ -63,6 +63,27 @@ export const DEAL_STATUS_DOT_CLASSES: Record<DealStatus, string> = {
   dead: "bg-zinc-400",
 };
 
+// Payment state is a separate axis from pipeline stage: a deal's stage says
+// where the work is, payment status says where the money is. Moving a deal
+// to the `invoiced` / `paid` stages syncs payment status forward (never back).
+export const PAYMENT_STATUSES = ["not_invoiced", "invoiced", "paid"] as const;
+
+export type PaymentStatus = (typeof PAYMENT_STATUSES)[number];
+
+export const PAYMENT_STATUS_LABELS: Record<PaymentStatus, string> = {
+  not_invoiced: "Not invoiced",
+  invoiced: "Invoiced",
+  paid: "Paid",
+};
+
+export const PAYMENT_STATUS_BADGE_CLASSES: Record<PaymentStatus, string> = {
+  not_invoiced:
+    "bg-slate-100 text-slate-700 border-slate-200 dark:bg-slate-400/10 dark:text-slate-300 dark:border-slate-400/20",
+  invoiced:
+    "bg-cyan-100 text-cyan-800 border-cyan-200 dark:bg-cyan-400/10 dark:text-cyan-300 dark:border-cyan-400/20",
+  paid: "bg-emerald-100 text-emerald-800 border-emerald-200 dark:bg-emerald-400/10 dark:text-emerald-300 dark:border-emerald-400/20",
+};
+
 export const CONTENT_TYPES = ["video", "short", "post"] as const;
 
 export type ContentType = (typeof CONTENT_TYPES)[number];

@@ -5,8 +5,12 @@ import { todayIso } from "@/lib/dates";
 import { requireUserId } from "@/core/auth/session";
 import { hasAccess } from "@/core/billing/entitlements";
 import { UpgradeNotice } from "@/core/billing/upgrade-notice";
-import { getDealStats, listDeals } from "@/domains/tracker/queries";
-import { listSponsors } from "@/domains/tracker/queries";
+import {
+  getDealStats,
+  listDeals,
+  listDeliverables,
+  listSponsors,
+} from "@/domains/tracker/queries";
 
 import { DealFilters } from "@/domains/tracker/components/deal-filters";
 
@@ -25,9 +29,10 @@ export default async function DashboardPage({
   }
   const params = await searchParams;
 
-  const [sponsors, stats] = await Promise.all([
+  const [sponsors, stats, deliverables] = await Promise.all([
     listSponsors(userId),
     getDealStats(userId),
+    listDeliverables(userId),
   ]);
   const sponsorOptions = sponsors.map((s) => ({ id: s.id, name: s.name }));
   // Only pass a sponsor filter that exists for this user.
@@ -59,6 +64,7 @@ export default async function DashboardPage({
       <PipelineBoard
         deals={deals}
         sponsors={sponsorOptions}
+        deliverables={deliverables}
         today={todayIso()}
       />
     </div>

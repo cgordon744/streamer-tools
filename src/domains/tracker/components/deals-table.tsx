@@ -10,8 +10,9 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { CONTENT_TYPE_LABELS } from "@/core/config/deals";
-import { formatDueDate } from "@/lib/dates";
+import { formatDueDate, todayIso } from "@/lib/dates";
 import { formatCents } from "@/lib/money";
+import { PaymentStatusBadge } from "@/domains/tracker/components/payment-status-badge";
 import type { DealWithSponsor } from "@/domains/tracker/queries";
 
 export function DealsTable({
@@ -31,12 +32,15 @@ export function DealsTable({
     );
   }
 
+  const today = todayIso();
+
   return (
     <Table>
       <TableHeader>
         <TableRow>
           <TableHead>Sponsor</TableHead>
           <TableHead>Status</TableHead>
+          <TableHead>Payment</TableHead>
           <TableHead>Content</TableHead>
           <TableHead className="text-right">Amount</TableHead>
           <TableHead>Deliverable due</TableHead>
@@ -50,6 +54,9 @@ export function DealsTable({
             <TableCell className="font-medium">{deal.sponsorName}</TableCell>
             <TableCell>
               <DealStatusBadge status={deal.status} />
+            </TableCell>
+            <TableCell>
+              <PaymentStatusBadge deal={deal} today={today} />
             </TableCell>
             <TableCell>{CONTENT_TYPE_LABELS[deal.contentType]}</TableCell>
             <TableCell className="text-right tabular-nums">

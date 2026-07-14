@@ -4,25 +4,43 @@ import { describe, expect, it } from "vitest";
 import { StatCards } from "./stat-cards";
 
 describe("StatCards", () => {
-  it("renders all four KPIs with formatted currency", () => {
+  it("renders the dashboard strip with formatted values", () => {
     render(
       <StatCards
         stats={{
-          pipelineCents: 330000,
-          awaitingPaymentCents: 50000,
-          paidCents: 65000,
-          dueSoonCount: 2,
+          activeCount: 3,
+          inFlightCents: 650000,
+          overdueCount: 1,
+          overdueCents: 150000,
+          nextDeliverableDate: "2026-07-17",
         }}
       />,
     );
 
-    expect(screen.getByText("Pipeline value")).toBeTruthy();
-    expect(screen.getByText("$3,300.00")).toBeTruthy();
-    expect(screen.getByText("Awaiting payment")).toBeTruthy();
-    expect(screen.getByText("$500.00")).toBeTruthy();
-    expect(screen.getByText("Paid")).toBeTruthy();
-    expect(screen.getByText("$650.00")).toBeTruthy();
-    expect(screen.getByText("Due this week")).toBeTruthy();
-    expect(screen.getByText("2")).toBeTruthy();
+    expect(screen.getByText("Active deals")).toBeTruthy();
+    expect(screen.getByText("3")).toBeTruthy();
+    expect(screen.getByText("In flight")).toBeTruthy();
+    expect(screen.getByText("$6,500.00")).toBeTruthy();
+    expect(screen.getByText("Overdue payments")).toBeTruthy();
+    expect(screen.getByText("$1,500.00 · 1")).toBeTruthy();
+    expect(screen.getByText("Next deliverable")).toBeTruthy();
+    expect(screen.getByText("Jul 17, 2026")).toBeTruthy();
+  });
+
+  it("shows a calm overdue card when nothing is past due", () => {
+    render(
+      <StatCards
+        stats={{
+          activeCount: 0,
+          inFlightCents: 0,
+          overdueCount: 0,
+          overdueCents: 0,
+          nextDeliverableDate: null,
+        }}
+      />,
+    );
+
+    expect(screen.getByText("None")).toBeTruthy();
+    expect(screen.getByText("Nothing past due")).toBeTruthy();
   });
 });

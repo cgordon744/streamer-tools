@@ -12,17 +12,21 @@ import { DEAL_STATUS_LABELS } from "@/core/config/deals";
 import { trackEvent } from "@/core/events/track";
 import {
   createDeal,
+  createDeliverable,
   createSponsor,
   deleteDeal,
+  deleteDeliverable,
   deleteSponsor,
   getDeal,
   getSponsor,
+  setDeliverableCompleted,
   updateDeal,
   updateDealStatus,
   updateSponsor,
 } from "@/domains/tracker/queries";
 import {
   dealInputSchema,
+  deliverableInputSchema,
   sponsorInputSchema,
 } from "@/domains/tracker/validation";
 
@@ -32,6 +36,7 @@ function parseDealForm(formData: FormData) {
     status: formData.get("status"),
     amount: formData.get("amount"),
     contentType: formData.get("contentType"),
+    paymentStatus: formData.get("paymentStatus"),
     deliverableDueDate: formData.get("deliverableDueDate"),
     paymentDueDate: formData.get("paymentDueDate"),
     notes: formData.get("notes"),
@@ -183,4 +188,56 @@ export async function deleteSponsorAction(
   }
   revalidateSponsorPages();
   return actionSuccess("Sponsor deleted");
+}
+
+export async function createDeliverableAction(
+  _prevState: ActionResult | undefined,
+  formData: FormData,
+): Promise<ActionResult> {
+  const userId = await requireUserId();
+  const parsed = deliverableInputSchema.safeParse({
+    dealId: formData.get("dealId"),
+    title: formData.get("title"),
+    dueDate: formData.get("dueDate"),
+  });
+  if (!parsed.success) {
+    return actionError(parsed.error.issues[0].message);
+  }
+  // The deal must belong to the acting user — never trust a submitted id.
+  const deal = await getDeal(userId, parsed.data.dealId);
+  if (!deal) {
+    return actionError("Deal not found");
+  }
+  await createDeliverable(userId, parsed.data);
+  revalidateDealPages();
+  return actionSuccess("Deliverable added");
+}
+
+export async function toggleDeliverableAction(
+  deliverableId: string,
+  completed: boolean,
+): Promise<ActionResult> {
+  const userId = await requireUserId();
+  const updated = await setDeliverableCompleted(
+    userId,
+    deliverableId,
+    completed,
+  );
+  if (!updated) {
+    return actionError("Deliverable not found");
+  }
+  revalidateDealPages();
+  return actionSuccess(completed ? "Checked off" : "Reopened");
+}
+
+export async function deleteDeliverableAction(
+  deliverableId: string,
+): Promise<ActionResult> {
+  const userId = await requireUserId();
+  const deleted = await deleteDeliverable(userId, deliverableId);
+  if (!deleted) {
+    return actionError("Deliverable not found");
+  }
+  revalidateDealPages();
+  return actionSuccess("Deliverable removed");
 }

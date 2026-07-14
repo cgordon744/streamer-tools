@@ -1,14 +1,20 @@
-import { and, asc, eq, isNull, sql } from "drizzle-orm";
+import { and, asc, desc, eq, isNull, sql } from "drizzle-orm";
 
-import type { DealStatus } from "@/core/config/deals";
+import type { DealStatus, PaymentStatus } from "@/core/config/deals";
 import { getDb } from "@/core/db/client";
 import {
   deals,
+  deliverables,
   sponsors,
   type Deal,
+  type Deliverable,
   type Sponsor,
 } from "@/domains/tracker/schema";
-import type { DealInput, SponsorInput } from "@/domains/tracker/validation";
+import type {
+  DealInput,
+  DeliverableInput,
+  SponsorInput,
+} from "@/domains/tracker/validation";
 
 export type DealWithSponsor = Deal & { sponsorName: string };
 
@@ -104,15 +110,34 @@ export async function updateDeal(
   return deal ?? null;
 }
 
+// Stage moves sync payment status forward (never back): landing on the
+// `invoiced` stage marks an un-invoiced deal invoiced, landing on `paid`
+// marks it paid. Direct payment-status edits happen in the deal form.
+function paymentSyncFor(
+  status: DealStatus,
+  current: PaymentStatus,
+): PaymentStatus | undefined {
+  if (status === "paid") return current === "paid" ? undefined : "paid";
+  if (status === "invoiced" && current === "not_invoiced") return "invoiced";
+  return undefined;
+}
+
 export async function updateDealStatus(
   userId: string,
   dealId: string,
   status: DealStatus,
 ): Promise<Deal | null> {
   const db = getDb();
+  const existing = await getDeal(userId, dealId);
+  if (!existing) return null;
+  const paymentStatus = paymentSyncFor(status, existing.paymentStatus);
   const [deal] = await db
     .update(deals)
-    .set({ status, updatedAt: new Date() })
+    .set({
+      status,
+      ...(paymentStatus ? { paymentStatus } : {}),
+      updatedAt: new Date(),
+    })
     .where(
       and(
         eq(deals.id, dealId),
@@ -124,30 +149,54 @@ export async function updateDealStatus(
   return deal ?? null;
 }
 
+// The dashboard strip (spec §2/§6): active deals, $ in flight, overdue
+// payments, next deliverable. "Overdue" mirrors payments.isPaymentOverdue in
+// SQL; "next deliverable" is the nearest upcoming date across active deals'
+// deliverable dates and open checklist items.
 export type DealStats = {
-  pipelineCents: number;
-  awaitingPaymentCents: number;
-  paidCents: number;
-  dueSoonCount: number;
+  activeCount: number;
+  inFlightCents: number;
+  overdueCount: number;
+  overdueCents: number;
+  nextDeliverableDate: string | null;
 };
+
+const activeDeal = sql`${deals.status} not in ('paid', 'dead')`;
+const overduePayment = sql`${deals.paymentStatus} <> 'paid' and ${deals.status} <> 'dead' and ${deals.paymentDueDate} < current_date`;
 
 export async function getDealStats(userId: string): Promise<DealStats> {
   const db = getDb();
   const [row] = await db
     .select({
-      pipelineCents: sql<string>`coalesce(sum(${deals.amountCents}) filter (where ${deals.status} not in ('paid', 'dead')), 0)`,
-      awaitingPaymentCents: sql<string>`coalesce(sum(${deals.amountCents}) filter (where ${deals.status} in ('content_delivered', 'invoiced')), 0)`,
-      paidCents: sql<string>`coalesce(sum(${deals.amountCents}) filter (where ${deals.status} = 'paid'), 0)`,
-      dueSoonCount: sql<string>`count(*) filter (where ${deals.status} not in ('paid', 'dead') and ${nearestDeadline} between current_date and current_date + 7)`,
+      activeCount: sql<string>`count(*) filter (where ${activeDeal})`,
+      inFlightCents: sql<string>`coalesce(sum(${deals.amountCents}) filter (where ${activeDeal}), 0)`,
+      overdueCount: sql<string>`count(*) filter (where ${overduePayment})`,
+      overdueCents: sql<string>`coalesce(sum(${deals.amountCents}) filter (where ${overduePayment}), 0)`,
     })
     .from(deals)
     .where(and(eq(deals.userId, userId), isNull(deals.deletedAt)));
 
+  const [next] = await db
+    .select({
+      nextDeliverableDate: sql<string | null>`least(
+        (select min(${deals.deliverableDueDate}) from ${deals}
+          where ${deals.userId} = ${userId} and ${deals.deletedAt} is null
+            and ${activeDeal} and ${deals.deliverableDueDate} >= current_date),
+        (select min(${deliverables.dueDate}) from ${deliverables}
+          where ${deliverables.userId} = ${userId}
+            and ${deliverables.deletedAt} is null
+            and ${deliverables.completedAt} is null
+            and ${deliverables.dueDate} >= current_date)
+      )`,
+    })
+    .from(sql`(select 1) as one`);
+
   return {
-    pipelineCents: Number(row.pipelineCents),
-    awaitingPaymentCents: Number(row.awaitingPaymentCents),
-    paidCents: Number(row.paidCents),
-    dueSoonCount: Number(row.dueSoonCount),
+    activeCount: Number(row.activeCount),
+    inFlightCents: Number(row.inFlightCents),
+    overdueCount: Number(row.overdueCount),
+    overdueCents: Number(row.overdueCents),
+    nextDeliverableDate: next.nextDeliverableDate,
   };
 }
 
@@ -262,4 +311,166 @@ export async function deleteSponsor(
       ),
     );
   return true;
+}
+
+export async function listDeliverables(
+  userId: string,
+): Promise<Deliverable[]> {
+  const db = getDb();
+  return db
+    .select()
+    .from(deliverables)
+    .where(and(eq(deliverables.userId, userId), isNull(deliverables.deletedAt)))
+    .orderBy(
+      sql`${deliverables.dueDate} ASC NULLS LAST`,
+      asc(deliverables.createdAt),
+    );
+}
+
+export async function createDeliverable(
+  userId: string,
+  input: DeliverableInput,
+): Promise<Deliverable> {
+  const db = getDb();
+  const [deliverable] = await db
+    .insert(deliverables)
+    .values({ ...input, userId })
+    .returning();
+  return deliverable;
+}
+
+export async function setDeliverableCompleted(
+  userId: string,
+  deliverableId: string,
+  completed: boolean,
+): Promise<Deliverable | null> {
+  const db = getDb();
+  const [deliverable] = await db
+    .update(deliverables)
+    .set({ completedAt: completed ? new Date() : null, updatedAt: new Date() })
+    .where(
+      and(
+        eq(deliverables.id, deliverableId),
+        eq(deliverables.userId, userId),
+        isNull(deliverables.deletedAt),
+      ),
+    )
+    .returning();
+  return deliverable ?? null;
+}
+
+export async function deleteDeliverable(
+  userId: string,
+  deliverableId: string,
+): Promise<boolean> {
+  const db = getDb();
+  const deleted = await db
+    .update(deliverables)
+    .set({ deletedAt: new Date(), updatedAt: new Date() })
+    .where(
+      and(
+        eq(deliverables.id, deliverableId),
+        eq(deliverables.userId, userId),
+        isNull(deliverables.deletedAt),
+      ),
+    )
+    .returning({ id: deliverables.id });
+  return deleted.length > 0;
+}
+
+// ---------------------------------------------------------------------------
+// Exported data contract (tracker spec §5). The tracker is the portfolio's
+// primary data producer; future domains consume ONLY these functions, never
+// the tables. Keep signatures stable.
+// ---------------------------------------------------------------------------
+
+export type VerifiedSponsor = {
+  id: string;
+  name: string;
+  completedDealCount: number;
+};
+
+// Sponsors backed by at least one deal that reached content_delivered or
+// later — "brands this creator has actually worked with".
+// Consumed by: media kit (verified sponsor logos/names).
+export async function getVerifiedSponsors(
+  userId: string,
+): Promise<VerifiedSponsor[]> {
+  const db = getDb();
+  const rows = await db
+    .select({
+      id: sponsors.id,
+      name: sponsors.name,
+      completedDealCount: sql<string>`count(*)`,
+    })
+    .from(sponsors)
+    .innerJoin(deals, eq(deals.sponsorId, sponsors.id))
+    .where(
+      and(
+        eq(sponsors.userId, userId),
+        isNull(sponsors.deletedAt),
+        isNull(deals.deletedAt),
+        sql`${deals.status} in ('content_delivered', 'invoiced', 'paid')`,
+      ),
+    )
+    .groupBy(sponsors.id, sponsors.name)
+    .orderBy(asc(sponsors.name));
+  return rows.map((r) => ({
+    ...r,
+    completedDealCount: Number(r.completedDealCount),
+  }));
+}
+
+export type DealHistoryEntry = {
+  id: string;
+  sponsorName: string;
+  amountCents: number;
+  contentType: Deal["contentType"];
+  status: DealStatus;
+  createdAt: Date;
+};
+
+// Full (non-deleted) deal history with amounts and dates.
+// Consumed by: rate calculator (benchmarking a creator's real deal prices).
+export async function getDealHistory(
+  userId: string,
+): Promise<DealHistoryEntry[]> {
+  const db = getDb();
+  const rows = await db
+    .select({
+      id: deals.id,
+      sponsorName: sponsors.name,
+      amountCents: deals.amountCents,
+      contentType: deals.contentType,
+      status: deals.status,
+      createdAt: deals.createdAt,
+    })
+    .from(deals)
+    .innerJoin(sponsors, eq(deals.sponsorId, sponsors.id))
+    .where(and(eq(deals.userId, userId), isNull(deals.deletedAt)))
+    .orderBy(desc(deals.createdAt));
+  return rows;
+}
+
+// Deals at an invoiceable point: content delivered (or invoiced) and money
+// still outstanding.
+// Consumed by: invoice tool (pre-filling invoices from deal data).
+export async function getPayableDeals(
+  userId: string,
+): Promise<DealWithSponsor[]> {
+  const db = getDb();
+  const rows = await db
+    .select({ deal: deals, sponsorName: sponsors.name })
+    .from(deals)
+    .innerJoin(sponsors, eq(deals.sponsorId, sponsors.id))
+    .where(
+      and(
+        eq(deals.userId, userId),
+        isNull(deals.deletedAt),
+        sql`${deals.status} in ('content_delivered', 'invoiced')`,
+        sql`${deals.paymentStatus} <> 'paid'`,
+      ),
+    )
+    .orderBy(sql`${deals.paymentDueDate} ASC NULLS LAST`);
+  return rows.map((row) => ({ ...row.deal, sponsorName: row.sponsorName }));
 }

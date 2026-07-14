@@ -10,6 +10,7 @@ function baseInput(overrides: Record<string, unknown> = {}) {
     status: "lead",
     amount: "1,500.00",
     contentType: "video",
+    paymentStatus: "not_invoiced",
     deliverableDueDate: "",
     paymentDueDate: "",
     notes: "",

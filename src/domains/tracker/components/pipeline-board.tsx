@@ -3,6 +3,7 @@
 import {
   CalendarClock,
   Clapperboard,
+  ListChecks,
   MoreHorizontal,
   Wallet,
 } from "lucide-react";
@@ -34,22 +35,33 @@ import {
 } from "@/core/config/deals";
 import { dueUrgency, formatShortDate, type DueUrgency } from "@/lib/dates";
 import { formatCents } from "@/lib/money";
+import { daysPastDue, isPaymentOverdue } from "@/domains/tracker/payments";
 import {
   deleteDealAction,
   updateDealStatusAction,
 } from "@/domains/tracker/actions";
+import { DealDetailsDialog } from "@/domains/tracker/components/deal-details-dialog";
 import type { DealWithSponsor } from "@/domains/tracker/queries";
+import type { Deliverable } from "@/domains/tracker/schema";
 import { cn } from "@/lib/utils";
 
 export function PipelineBoard({
   deals,
   sponsors,
+  deliverables = [],
   today,
 }: {
   deals: DealWithSponsor[];
   sponsors: SponsorOption[];
+  deliverables?: Deliverable[];
   today: string;
 }) {
+  const deliverablesByDeal = new Map<string, Deliverable[]>();
+  for (const item of deliverables) {
+    const list = deliverablesByDeal.get(item.dealId) ?? [];
+    list.push(item);
+    deliverablesByDeal.set(item.dealId, list);
+  }
   const [optimisticDeals, applyMove] = useOptimistic(
     deals,
     (state, move: { dealId: string; status: DealStatus }) =>
@@ -121,6 +133,7 @@ export function PipelineBoard({
                   key={deal.id}
                   deal={deal}
                   sponsors={sponsors}
+                  deliverables={deliverablesByDeal.get(deal.id) ?? []}
                   today={today}
                   onMove={moveDeal}
                 />
@@ -173,34 +186,59 @@ function DateChip({
 function DealCard({
   deal,
   sponsors,
+  deliverables,
   today,
   onMove,
 }: {
   deal: DealWithSponsor;
   sponsors: SponsorOption[];
+  deliverables: Deliverable[];
   today: string;
   onMove: (dealId: string, status: DealStatus) => void;
 }) {
+  const [detailsOpen, setDetailsOpen] = useState(false);
   const [editOpen, setEditOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
+  const overdue = isPaymentOverdue(deal, today);
+  const doneCount = deliverables.filter((d) => d.completedAt).length;
 
   return (
     <>
       <div
         draggable
         onDragStart={(e) => e.dataTransfer.setData("text/plain", deal.id)}
-        className="bg-background group cursor-grab rounded-md border p-2.5 shadow-xs transition-shadow hover:shadow-sm active:cursor-grabbing"
+        className={cn(
+          "bg-background group cursor-grab rounded-md border p-2.5 shadow-xs transition-shadow hover:shadow-sm active:cursor-grabbing",
+          overdue && "border-red-300 dark:border-red-400/40",
+        )}
       >
+        {overdue ? (
+          <div className="mb-1.5 inline-flex items-center gap-1 rounded border border-red-300 bg-red-100 px-1.5 py-0.5 text-[11px] leading-none font-semibold text-red-800 dark:border-red-400/40 dark:bg-red-400/15 dark:text-red-300">
+            <Wallet className="size-3" />
+            Overdue {daysPastDue(deal.paymentDueDate!, today)}d ·{" "}
+            {formatCents(deal.amountCents)}
+          </div>
+        ) : null}
         <div className="flex items-start justify-between gap-1">
-          <div className="min-w-0">
+          <button
+            type="button"
+            onClick={() => setDetailsOpen(true)}
+            className="min-w-0 cursor-pointer text-left"
+          >
             <p className="truncate text-sm font-medium">{deal.sponsorName}</p>
             <p className="text-muted-foreground text-xs">
               {CONTENT_TYPE_LABELS[deal.contentType]} ·{" "}
               <span className="tabular-nums">
                 {formatCents(deal.amountCents)}
               </span>
+              {deliverables.length > 0 ? (
+                <span className="ml-1.5 inline-flex items-center gap-0.5">
+                  <ListChecks className="size-3" />
+                  {doneCount}/{deliverables.length}
+                </span>
+              ) : null}
             </p>
-          </div>
+          </button>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button
@@ -228,6 +266,9 @@ function DealCard({
                 </DropdownMenuItem>
               ))}
               <DropdownMenuSeparator />
+              <DropdownMenuItem onSelect={() => setDetailsOpen(true)}>
+                Details
+              </DropdownMenuItem>
               <DropdownMenuItem onSelect={() => setEditOpen(true)}>
                 Edit
               </DropdownMenuItem>
@@ -264,6 +305,16 @@ function DealCard({
           </div>
         ) : null}
       </div>
+
+      {detailsOpen ? (
+        <DealDetailsDialog
+          deal={deal}
+          deliverables={deliverables}
+          today={today}
+          open={detailsOpen}
+          onOpenChange={setDetailsOpen}
+        />
+      ) : null}
 
       {editOpen ? (
         <DealFormDialog

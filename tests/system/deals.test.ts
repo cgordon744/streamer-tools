@@ -32,6 +32,7 @@ function dealInput(sponsorId: string, overrides = {}) {
     status: "lead" as const,
     amount: 100000,
     contentType: "video" as const,
+    paymentStatus: "not_invoiced" as const,
     deliverableDueDate: null,
     paymentDueDate: null,
     notes: null,
@@ -111,7 +112,7 @@ describe("deal service", () => {
     expect(ids).toEqual([near.id, far.id, undated.id]);
   });
 
-  it("computes pipeline stats", async () => {
+  it("computes dashboard strip stats", async () => {
     const user = await createTestUser();
     const sponsor = (await createSponsor(user, sponsorInput)).id;
     await createDeal(user, dealInput(sponsor, { status: "lead", amount: 100 }));
@@ -120,16 +121,57 @@ describe("deal service", () => {
       dealInput(sponsor, {
         status: "content_delivered",
         amount: 200,
-        paymentDueDate: isoDaysFromToday(3),
+        deliverableDueDate: isoDaysFromToday(5),
+        paymentDueDate: isoDaysFromToday(-3), // overdue, not paid
       }),
     );
     await createDeal(user, dealInput(sponsor, { status: "paid", amount: 400 }));
 
     const stats = await getDealStats(user);
-    expect(stats.pipelineCents).toBe(300); // lead + content_delivered
-    expect(stats.awaitingPaymentCents).toBe(200);
-    expect(stats.paidCents).toBe(400);
-    expect(stats.dueSoonCount).toBe(1);
+    expect(stats.activeCount).toBe(2); // lead + content_delivered
+    expect(stats.inFlightCents).toBe(300);
+    expect(stats.overdueCount).toBe(1);
+    expect(stats.overdueCents).toBe(200);
+    expect(stats.nextDeliverableDate).toBe(isoDaysFromToday(5));
+  });
+
+  it("does not flag paid or dead deals as overdue", async () => {
+    const user = await createTestUser();
+    const sponsor = (await createSponsor(user, sponsorInput)).id;
+    await createDeal(
+      user,
+      dealInput(sponsor, {
+        status: "paid",
+        paymentStatus: "paid" as const,
+        paymentDueDate: isoDaysFromToday(-10),
+      }),
+    );
+    await createDeal(
+      user,
+      dealInput(sponsor, {
+        status: "dead",
+        paymentDueDate: isoDaysFromToday(-10),
+      }),
+    );
+
+    const stats = await getDealStats(user);
+    expect(stats.overdueCount).toBe(0);
+  });
+
+  it("syncs payment status forward on stage moves, never back", async () => {
+    const user = await createTestUser();
+    const sponsor = (await createSponsor(user, sponsorInput)).id;
+    const deal = await createDeal(user, dealInput(sponsor));
+
+    const invoiced = await updateDealStatus(user, deal.id, "invoiced");
+    expect(invoiced?.paymentStatus).toBe("invoiced");
+
+    const paid = await updateDealStatus(user, deal.id, "paid");
+    expect(paid?.paymentStatus).toBe("paid");
+
+    // Dragging the deal back does not un-pay it.
+    const reopened = await updateDealStatus(user, deal.id, "invoiced");
+    expect(reopened?.paymentStatus).toBe("paid");
   });
 
   it("deletes a deal", async () => {
@@ -174,10 +216,11 @@ describe("deal service", () => {
       const freshUser = await createTestUser();
       const stats = await getDealStats(freshUser);
       expect(stats).toEqual({
-        pipelineCents: 0,
-        awaitingPaymentCents: 0,
-        paidCents: 0,
-        dueSoonCount: 0,
+        activeCount: 0,
+        inFlightCents: 0,
+        overdueCount: 0,
+        overdueCents: 0,
+        nextDeliverableDate: null,
       });
     });
   });

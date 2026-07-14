@@ -21,6 +21,7 @@ const deal: DealWithSponsor = {
   status: "contract_signed",
   amountCents: 250000,
   contentType: "video",
+  paymentStatus: "not_invoiced",
   deliverableDueDate: "2026-07-20",
   paymentDueDate: null,
   notes: null,

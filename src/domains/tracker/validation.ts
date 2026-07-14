@@ -1,6 +1,10 @@
 import { z } from "zod";
 
-import { CONTENT_TYPES, DEAL_STATUSES } from "@/core/config/deals";
+import {
+  CONTENT_TYPES,
+  DEAL_STATUSES,
+  PAYMENT_STATUSES,
+} from "@/core/config/deals";
 import { parseDollarsToCents } from "@/lib/money";
 import { emptyToNull } from "@/lib/validation";
 
@@ -32,6 +36,7 @@ export const dealInputSchema = z.object({
       return cents;
     }),
   contentType: z.enum(CONTENT_TYPES),
+  paymentStatus: z.enum(PAYMENT_STATUSES),
   deliverableDueDate: optionalDate,
   paymentDueDate: optionalDate,
   notes: z.preprocess(
@@ -59,3 +64,11 @@ export const sponsorInputSchema = z.object({
 });
 
 export type SponsorInput = z.infer<typeof sponsorInputSchema>;
+
+export const deliverableInputSchema = z.object({
+  dealId: z.string().uuid("Missing deal"),
+  title: z.string().trim().min(1, "Title is required").max(300),
+  dueDate: optionalDate,
+});
+
+export type DeliverableInput = z.infer<typeof deliverableInputSchema>;

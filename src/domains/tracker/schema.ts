@@ -9,7 +9,11 @@ import {
 } from "drizzle-orm/pg-core";
 
 import { users } from "@/core/auth/schema";
-import type { ContentType, DealStatus } from "@/core/config/deals";
+import type {
+  ContentType,
+  DealStatus,
+  PaymentStatus,
+} from "@/core/config/deals";
 
 export const sponsors = pgTable(
   "tracker_sponsors",
@@ -55,6 +59,12 @@ export const deals = pgTable(
     // Money as integer cents — exact arithmetic, no float drift.
     amountCents: integer("amount_cents").notNull(),
     contentType: text("content_type").$type<ContentType>().notNull(),
+    // Where the money is, independent of pipeline stage. Overdue is computed
+    // (payment_due_date past + not paid), never stored.
+    paymentStatus: text("payment_status")
+      .$type<PaymentStatus>()
+      .notNull()
+      .default("not_invoiced"),
     deliverableDueDate: date("deliverable_due_date"),
     paymentDueDate: date("payment_due_date"),
     notes: text("notes"),
@@ -75,3 +85,35 @@ export const deals = pgTable(
 );
 
 export type Deal = typeof deals.$inferSelect;
+
+export const deliverables = pgTable(
+  "tracker_deliverables",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    // Multi-tenancy: every row is owned by a user; all queries scope by this.
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    dealId: uuid("deal_id")
+      .notNull()
+      .references(() => deals.id, { onDelete: "cascade" }),
+    title: text("title").notNull(),
+    dueDate: date("due_date"),
+    completedAt: timestamp("completed_at", { withTimezone: true }),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+    // Soft delete (CHASSIS_SPEC §3): rows are flagged, never dropped —
+    // creators ask for things back. All reads filter on this being null.
+    deletedAt: timestamp("deleted_at", { withTimezone: true }),
+  },
+  (table) => [
+    index("tracker_deliverables_user_id_idx").on(table.userId),
+    index("tracker_deliverables_deal_id_idx").on(table.dealId),
+  ],
+);
+
+export type Deliverable = typeof deliverables.$inferSelect;

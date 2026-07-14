@@ -16,7 +16,7 @@ A YouTube sponsorship deal tracker. MVP is single-user, but the structure assume
 - **`pg` driver via `drizzle-orm/node-postgres` instead of `@neondatabase/serverless`** — one code path that works identically against local Docker Postgres and Neon over TCP; swapping to the Neon serverless driver later is a one-file change in `src/db/client.ts`.
 - **JWT sessions, no DB session adapter** — Auth.js Credentials provider doesn't support database sessions anyway, and JWT keeps auth stateless; a DB adapter can be added when OAuth providers arrive.
 - **Server actions as the API layer (not route handlers)** — actions in `src/modules/*/actions.ts` are thin, validated wrappers over service functions; a future public REST/webhook API adds route handlers that call the _same_ service functions, so nothing gets rewritten.
-- **Statuses/content types live in `src/config/deals.ts` and are stored as Postgres enums** — single source of truth in code; DB enums give integrity, and adding a value is one migration.
+- **Statuses/content types live in `src/core/config/deals.ts` and are stored as plain text** — single source of truth in code, zod-enforced at the action boundary (CHASSIS_SPEC §4: adding a stage is a config edit, not a migration). Originally Postgres enums; converted 2026-07-13.
 - **Seed script for the single user instead of hardcoded credentials** — the users table is real from day one, so multi-user later is "add signup," not "add users."
 - **Port 5433 for local Postgres** — avoids colliding with any system Postgres on 5432.
 - **shadcn set up manually (components.json + globals.css)** — the CLI's `init` is interactive-only in this version; `add` works fine non-interactively once config exists.
