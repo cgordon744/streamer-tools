@@ -12,7 +12,10 @@ export async function GET(request: Request) {
     }
   } else if (process.env.NODE_ENV === "production") {
     // Refuse to run unauthenticated in prod — set CRON_SECRET (NEEDS INPUT).
-    return Response.json({ error: "CRON_SECRET not configured" }, { status: 503 });
+    return Response.json(
+      { error: "CRON_SECRET not configured" },
+      { status: 503 },
+    );
   }
 
   const sender = getEmailSender();

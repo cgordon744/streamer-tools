@@ -79,6 +79,7 @@
 7. **Target buyer definition:** solo creators, ~10K–500K subs as proxy, deal activity (1–10/quarter) as true qualifier. Open question logged (thesis §8) on formalizing by deal volume.
 
 **Next actions:**
+
 - [x] Write the tracker spec (wedge tool) — `spec/tracker-spec.md`
 - [x] Chassis scaffold — superseded: the tracker MVP was built first (sessions above); the 2026-07-13 session aligns it to the chassis instead
 
@@ -100,9 +101,9 @@
 ### 2026-07-13 — Tracker spec §6 delta (Phase 3)
 
 - **What (migration 0004 + one feature commit, then cron commit):**
-  - **Payment tracking + overdue (hero):** `payment_status` (`not_invoiced / invoiced / paid`, config-driven text) on deals, backfilled from stage. Overdue is always *computed* (`paymentDueDate` past + not paid + not dead), never stored — `domains/tracker/payments.ts` holds the pure logic, mirrored in SQL for stats. Kanban cards get a red `Overdue Nd · $X` banner + red border; deals table gets a Payment column; deal form gets a payment select.
-  - **Decision — stage vs. payment are two axes, synced forward-only:** the spec's stage list contains Invoiced/Paid *and* asks for a separate payment status. Resolution: stage = where the work is, payment = where the money is; dragging a deal to the Invoiced/Paid stage advances payment status (never backward — dragging a paid deal back does not un-pay it), while the form edits payment directly. Covered by a system test.
-  - **Dashboard strip** replaced the old KPI cards, same visual pattern: active deals · $ in flight · overdue payments (goes red, spec's alert) · next deliverable (nearest upcoming across deal dates *and* open checklist items).
+  - **Payment tracking + overdue (hero):** `payment_status` (`not_invoiced / invoiced / paid`, config-driven text) on deals, backfilled from stage. Overdue is always _computed_ (`paymentDueDate` past + not paid + not dead), never stored — `domains/tracker/payments.ts` holds the pure logic, mirrored in SQL for stats. Kanban cards get a red `Overdue Nd · $X` banner + red border; deals table gets a Payment column; deal form gets a payment select.
+  - **Decision — stage vs. payment are two axes, synced forward-only:** the spec's stage list contains Invoiced/Paid _and_ asks for a separate payment status. Resolution: stage = where the work is, payment = where the money is; dragging a deal to the Invoiced/Paid stage advances payment status (never backward — dragging a paid deal back does not un-pay it), while the form edits payment directly. Covered by a system test.
+  - **Dashboard strip** replaced the old KPI cards, same visual pattern: active deals · $ in flight · overdue payments (goes red, spec's alert) · next deliverable (nearest upcoming across deal dates _and_ open checklist items).
   - **Deliverables checklist:** `tracker_deliverables` (userId-scoped, soft-delete) + details dialog (click a kanban card): stage/payment badges, dates, notes, checklist with add/check/delete and due-date urgency colors. Card shows a `n/m` checklist chip.
   - **Exported data contract (spec §5):** `getVerifiedSponsors` / `getDealHistory` / `getPayableDeals` in tracker's `queries.ts`, each doc-commented with its consuming future domain (media kit / rates / invoices).
   - **Reminder cron:** `vercel.json` cron (daily 14:00 UTC) → `/api/cron/reminders` (excluded from session auth; `CRON_SECRET` Bearer check, refuses unauthenticated prod runs). Logic in `domains/tracker/reminders.ts` is stateless/idempotent-per-day: deliverable reminder fires when due date is exactly 2 days out; overdue-payment reminder on day 1 past due then weekly — no sent-log table needed. Sender behind `core/email/sender.ts` interface: Resend implementation ready but gated by `EMAIL_REMINDERS_ENABLED` flag + `RESEND_API_KEY`; console stub otherwise. **See NEEDS INPUT #1–2.**
@@ -112,6 +113,7 @@
 ## End-of-session summary (2026-07-14, chassis-alignment + spec-delta session)
 
 **Done and verified:**
+
 - **Phase 1 (audit):** `docs/AUDIT.md` — MVP mapped against CHASSIS_SPEC; committed before any change.
 - **Phase 2 (align):** `/domains/tracker` + `/core` layout with boundary rules; DB enums → config-driven text with stage remap to the spec list (7 stages incl. Invoiced/Dead); `tracker_*` table prefixes; soft deletes everywhere; `hasAccess()` entitlement stub gating all tracker pages; internal `events` instrumentation (signup / deal_created / deal_stage_changed / daily active heartbeat).
 - **Phase 3 (extend):** payment status + computed overdue detection with red kanban banner + strip alert (the hero); spec dashboard strip (active · in flight · overdue · next deliverable); per-deal deliverables checklist with due dates in a card-click details dialog; exported data contract (`getVerifiedSponsors` / `getDealHistory` / `getPayableDeals`); daily reminder cron with stubbed sender behind a provider interface + feature flag.

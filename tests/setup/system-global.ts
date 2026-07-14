@@ -2,7 +2,11 @@ import { drizzle } from "drizzle-orm/node-postgres";
 import { migrate } from "drizzle-orm/node-postgres/migrator";
 import { Client, Pool } from "pg";
 
-import { ADMIN_DATABASE_URL, TEST_DATABASE_NAME, TEST_DATABASE_URL } from "./test-db";
+import {
+  ADMIN_DATABASE_URL,
+  TEST_DATABASE_NAME,
+  TEST_DATABASE_URL,
+} from "./test-db";
 
 // Recreates the test database from scratch and applies migrations, so every
 // system-test run starts from a pristine, migration-accurate schema.

@@ -2,33 +2,33 @@
 
 Codebase (as of `090107a`) mapped against `CHASSIS_SPEC.md`. Verdicts: **Conformant / Drifted / Missing**.
 
-The MVP predates the chassis spec; drift below is expected, not a defect. The good news: the original build's instincts (thin routes, module layer, userId scoping, config file for statuses) mean alignment is mostly *moving and renaming*, not rewriting.
+The MVP predates the chassis spec; drift below is expected, not a defect. The good news: the original build's instincts (thin routes, module layer, userId scoping, config file for statuses) mean alignment is mostly _moving and renaming_, not rewriting.
 
 ## 1. Folder structure vs. domain-module layout (CHASSIS §2) — **Drifted**
 
-| Check | Verdict | Note |
-|---|---|---|
-| Routes thin, no business logic | **Conformant** | Pages fetch via service functions and compose components; all writes go through server actions in the module layer. |
-| Business logic in a domain layer | **Conformant** | `src/modules/{sponsors,deals}` each have `schema.ts` / `service.ts` (≈ chassis `queries.ts`) / `actions.ts` / `validation.ts` — same shape, different names. |
-| Layout matches `/domains` + `/core` | **Drifted** | Everything is a flat sibling under `src/modules`; no separation between chassis code (auth, db, config) and tool code (sponsors, deals). `sponsors` + `deals` are one tool — they belong together in `/domains/tracker`. |
-| `(marketing)` route group | **Missing** | No public pages exist. Not needed until the first free tool; noted for completeness. |
-| Would a second tool slot in cleanly? | **Blocked by two things** | (a) no `/core` for it to share; (b) tracker-specific UI lives in the shared `src/components/` folder (see §2 below). |
+| Check                                | Verdict                   | Note                                                                                                                                                                                                                     |
+| ------------------------------------ | ------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Routes thin, no business logic       | **Conformant**            | Pages fetch via service functions and compose components; all writes go through server actions in the module layer.                                                                                                      |
+| Business logic in a domain layer     | **Conformant**            | `src/modules/{sponsors,deals}` each have `schema.ts` / `service.ts` (≈ chassis `queries.ts`) / `actions.ts` / `validation.ts` — same shape, different names.                                                             |
+| Layout matches `/domains` + `/core`  | **Drifted**               | Everything is a flat sibling under `src/modules`; no separation between chassis code (auth, db, config) and tool code (sponsors, deals). `sponsors` + `deals` are one tool — they belong together in `/domains/tracker`. |
+| `(marketing)` route group            | **Missing**               | No public pages exist. Not needed until the first free tool; noted for completeness.                                                                                                                                     |
+| Would a second tool slot in cleanly? | **Blocked by two things** | (a) no `/core` for it to share; (b) tracker-specific UI lives in the shared `src/components/` folder (see §2 below).                                                                                                     |
 
 ## 2. Import boundaries — **Drifted**
 
 - **Violation (structural):** tracker-specific components — `pipeline-board`, `deals-table`, `deal-form-dialog`, `deal-row-actions`, `deal-status-badge`, `stat-cards` — live in shared `src/components/` and import `modules/deals` internals. A second domain would inherit tracker internals via "shared" UI. Fix: move them to `domains/tracker/components/`.
-- `deals` imports `sponsors`' service and schema directly. Cross-*module* today, but both are the same tool — internal once merged into `/domains/tracker`.
+- `deals` imports `sponsors`' service and schema directly. Cross-_module_ today, but both are the same tool — internal once merged into `/domains/tracker`.
 - Routes import module services/actions directly — this is the intended interface (chassis rule 2), fine.
 - No mechanical enforcement (lint rule) of boundaries. Acceptable at one domain; worth adding when domain #2 lands.
 
 ## 3. Schema conventions (CHASSIS §3) — **Drifted**
 
-| Check | Verdict | Note |
-|---|---|---|
-| `userId` on every domain table, indexed | **Conformant** | Both `deals` and `sponsors`: FK + index, every service query scoped. Services take `userId` as an argument — better than spec asks. |
-| Domain-prefixed table names | **Drifted** | `deals`, `sponsors` → need `tracker_deals`, `tracker_sponsors` (rename migration, non-destructive). |
-| Soft deletes (`deletedAt`) | **Missing** | Hard deletes with FK cascade everywhere. |
-| Shared entities in `/core` schemas | **Drifted** | `users` lives in `modules/auth` — right idea, moves to `/core/auth`. No `subscriptions` / `youtube_channels` tables yet (not needed until Stripe / YouTube OAuth). |
+| Check                                   | Verdict        | Note                                                                                                                                                               |
+| --------------------------------------- | -------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `userId` on every domain table, indexed | **Conformant** | Both `deals` and `sponsors`: FK + index, every service query scoped. Services take `userId` as an argument — better than spec asks.                                |
+| Domain-prefixed table names             | **Drifted**    | `deals`, `sponsors` → need `tracker_deals`, `tracker_sponsors` (rename migration, non-destructive).                                                                |
+| Soft deletes (`deletedAt`)              | **Missing**    | Hard deletes with FK cascade everywhere.                                                                                                                           |
+| Shared entities in `/core` schemas      | **Drifted**    | `users` lives in `modules/auth` — right idea, moves to `/core/auth`. No `subscriptions` / `youtube_channels` tables yet (not needed until Stripe / YouTube OAuth). |
 
 ## 4. Config-driven enums (CHASSIS §4) — **Drifted**
 

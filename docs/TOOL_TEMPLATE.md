@@ -1,6 +1,6 @@
 # TOOL_TEMPLATE.md
 
-> **Purpose:** The repeatable spec format for proposing, building, and evaluating every portfolio tool. Copy this template to `/specs/<tool-name>.md`, fill it out **completely before any code is written**, and treat unfilled sections as a blocker. The kill criteria section is filled in *before launch* — that pre-commitment is the point (thesis §6).
+> **Purpose:** The repeatable spec format for proposing, building, and evaluating every portfolio tool. Copy this template to `/specs/<tool-name>.md`, fill it out **completely before any code is written**, and treat unfilled sections as a blocker. The kill criteria section is filled in _before launch_ — that pre-commitment is the point (thesis §6).
 
 ---
 
@@ -15,7 +15,7 @@
 
 One sentence. The sharp, frequent, annoying job this tool replaces. If it takes two sentences, the tool is too broad (thesis §3).
 
-> *Example (tracker): "Know the status, deadline, and payment state of every brand deal without digging through email threads and a spreadsheet."*
+> _Example (tracker): "Know the status, deadline, and payment state of every brand deal without digging through email threads and a spreadsheet."_
 
 ## 2. Demo Test Script
 
@@ -41,7 +41,7 @@ Apply the artifact rule (thesis §5): does the tool's output travel to third par
 - **Artifact audience:** [brands / other creators / private]
 - **Determination:** Free | Paid — with one sentence of reasoning.
 
-**If Free — cold-start plan (mandatory):** describe the complete first-use experience with zero bundle data. What public data is pulled (e.g., YouTube API)? What does the user enter manually? What is the finished output in ≤5 minutes? Then describe the *enhancement* path when bundle data exists.
+**If Free — cold-start plan (mandatory):** describe the complete first-use experience with zero bundle data. What public data is pulled (e.g., YouTube API)? What does the user enter manually? What is the finished output in ≤5 minutes? Then describe the _enhancement_ path when bundle data exists.
 
 ## 5. Data Contract
 
@@ -61,13 +61,14 @@ This section is how the data loop compounds. A tool that neither consumes nor pr
 
 Evaluated at launch + 60 days (thesis §6):
 
-| Signal | Threshold | Actual (fill at eval) |
-|---|---|---|
-| Activation: % of active bundle users who tried it ≥ once | __% | |
-| Retention: % of activated users returning weekly | __% | |
-| Disappointment: % "very disappointed" if removed (qualitative, n≥10) | __% | |
+| Signal                                                               | Threshold | Actual (fill at eval) |
+| -------------------------------------------------------------------- | --------- | --------------------- |
+| Activation: % of active bundle users who tried it ≥ once             | __%       |                       |
+| Retention: % of activated users returning weekly                     | __%       |                       |
+| Disappointment: % "very disappointed" if removed (qualitative, n≥10) | __%       |                       |
 
 **Pre-committed outcome mapping:**
+
 - Meets 2–3 thresholds → **Continue/invest**
 - Meets 0–1 → **Freeze** (default) or **Kill** if it clutters/confuses
 - Any special conditions: [e.g., "free tool: judged on signups + artifact shares instead of retention"]

@@ -12,8 +12,8 @@ Know the status, deliverables, deadline, and payment state of every brand deal a
 ## 2. Demo Test Script
 
 - **0–10s:** Split screen: a cluttered Gmail search for "sponsorship" next to a messy spreadsheet with stale statuses. Voiceover/caption: "This is how you're tracking $8,000 of deals."
-- **10–45s:** The tracker pipeline view. Add a new deal in ~10 seconds (brand, amount, stage). Drag a deal from *Negotiating* → *Contract Signed*. Click a deal: deliverables checklist, due dates, payment status (invoiced / paid / overdue) all on one card. The dashboard flags one deal: **"Payment overdue 12 days — $1,500."**
-- **45–60s:** Payoff shot: the dashboard's top strip — *"3 active deals · $6,500 in flight · 1 payment overdue · next deliverable Friday."* Caption: "Every deal, every dollar, one glance."
+- **10–45s:** The tracker pipeline view. Add a new deal in ~10 seconds (brand, amount, stage). Drag a deal from _Negotiating_ → _Contract Signed_. Click a deal: deliverables checklist, due dates, payment status (invoiced / paid / overdue) all on one card. The dashboard flags one deal: **"Payment overdue 12 days — $1,500."**
+- **45–60s:** Payoff shot: the dashboard's top strip — _"3 active deals · $6,500 in flight · 1 payment overdue · next deliverable Friday."_ Caption: "Every deal, every dollar, one glance."
 
 **The "I need that" moment:** the overdue-payment flag. Every creator has been quietly stiffed or paid late; seeing software catch it is visceral.
 
@@ -38,11 +38,12 @@ Know the status, deliverables, deadline, and payment state of every brand deal a
   - `getPayableDeals(userId)` → deals at invoiceable stages (→ invoice tool)
 - **Core/shared entities touched:** `users`, `subscriptions`
 
-The tracker is the portfolio's primary data *producer* — the root of the loop.
+The tracker is the portfolio's primary data _producer_ — the root of the loop.
 
 ## 6. MVP Scope
 
 **In (the one job, done well):**
+
 - Deals CRUD: brand, contact, amount, currency, notes
 - Pipeline stages (config-driven enum): Lead → Negotiating → Contract Signed → Content Delivered → Invoiced → Paid (+ Dead)
 - Per-deal deliverables checklist with due dates
@@ -51,6 +52,7 @@ The tracker is the portfolio's primary data *producer* — the root of the loop.
 - Email reminders: deliverable due in 48h; payment overdue
 
 **Explicitly out of v1:**
+
 - Gmail/email integration or parsing
 - Contract upload/e-sign
 - Analytics/reporting beyond the dashboard strip
@@ -62,13 +64,13 @@ The tracker is the portfolio's primary data *producer* — the root of the loop.
 
 ## 7. Kill Criteria (pre-committed — DRAFT, needs founder sign-off)
 
-**Special condition:** the tracker is the wedge and bundle anchor. A miss here doesn't trigger freeze/kill — it triggers a thesis-level review, because the portfolio is built on this tool converting. Thresholds below are therefore *health checks*, evaluated at launch + 60 days:
+**Special condition:** the tracker is the wedge and bundle anchor. A miss here doesn't trigger freeze/kill — it triggers a thesis-level review, because the portfolio is built on this tool converting. Thresholds below are therefore _health checks_, evaluated at launch + 60 days:
 
-| Signal | Threshold (draft) | Actual |
-|---|---|---|
-| Activation: % of signups creating ≥1 deal in first week | 60% | |
-| Retention: % of activated users active weekly | 40% | |
-| Disappointment: % "very disappointed" if removed (n≥10) | 40% | |
+| Signal                                                  | Threshold (draft) | Actual |
+| ------------------------------------------------------- | ----------------- | ------ |
+| Activation: % of signups creating ≥1 deal in first week | 60%               |        |
+| Retention: % of activated users active weekly           | 40%               |        |
+| Disappointment: % "very disappointed" if removed (n≥10) | 40%               |        |
 
 - Meets 2–3 → invest; begin tool #2
 - Meets 0–1 → thesis review: wrong buyer, wrong job, or wrong execution — diagnose before building anything else

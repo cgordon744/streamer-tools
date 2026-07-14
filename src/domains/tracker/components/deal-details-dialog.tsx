@@ -175,13 +175,7 @@ function DeliverablesChecklist({
   );
 }
 
-function DeliverableRow({
-  item,
-  today,
-}: {
-  item: Deliverable;
-  today: string;
-}) {
+function DeliverableRow({ item, today }: { item: Deliverable; today: string }) {
   const [isPending, startTransition] = useTransition();
   const completed = !!item.completedAt;
   const urgency =

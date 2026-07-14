@@ -176,17 +176,24 @@ export async function getDealStats(userId: string): Promise<DealStats> {
     .from(deals)
     .where(and(eq(deals.userId, userId), isNull(deals.deletedAt)));
 
+  // Raw table names with explicit aliases: drizzle renders interpolated
+  // column refs unqualified inside sql``, which is ambiguous once the
+  // deliverables subquery joins deals.
   const [next] = await db
     .select({
       nextDeliverableDate: sql<string | null>`least(
-        (select min(${deals.deliverableDueDate}) from ${deals}
-          where ${deals.userId} = ${userId} and ${deals.deletedAt} is null
-            and ${activeDeal} and ${deals.deliverableDueDate} >= current_date),
-        (select min(${deliverables.dueDate}) from ${deliverables}
-          where ${deliverables.userId} = ${userId}
-            and ${deliverables.deletedAt} is null
-            and ${deliverables.completedAt} is null
-            and ${deliverables.dueDate} >= current_date)
+        (select min(d.deliverable_due_date) from tracker_deals d
+          where d.user_id = ${userId} and d.deleted_at is null
+            and d.status not in ('paid', 'dead')
+            and d.deliverable_due_date >= current_date),
+        (select min(dv.due_date) from tracker_deliverables dv
+          inner join tracker_deals dd on dv.deal_id = dd.id
+          where dv.user_id = ${userId}
+            and dv.deleted_at is null
+            and dv.completed_at is null
+            and dv.due_date >= current_date
+            and dd.deleted_at is null
+            and dd.status not in ('paid', 'dead'))
       )`,
     })
     .from(sql`(select 1) as one`);
@@ -313,9 +320,7 @@ export async function deleteSponsor(
   return true;
 }
 
-export async function listDeliverables(
-  userId: string,
-): Promise<Deliverable[]> {
+export async function listDeliverables(userId: string): Promise<Deliverable[]> {
   const db = getDb();
   return db
     .select()

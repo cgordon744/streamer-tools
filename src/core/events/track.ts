@@ -6,10 +6,7 @@ import { events } from "@/core/events/schema";
 // The event vocabulary. Activation = signup → deal_created; retention =
 // weekly presence of `active`. Add names here as new tools land.
 export type AppEvent =
-  | "signup"
-  | "deal_created"
-  | "deal_stage_changed"
-  | "active";
+  "signup" | "deal_created" | "deal_stage_changed" | "active";
 
 // Instrumentation must never break a user-facing flow — failures are
 // swallowed after logging.

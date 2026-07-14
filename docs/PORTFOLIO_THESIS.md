@@ -1,6 +1,6 @@
 # PORTFOLIO_THESIS.md
 
-> **Purpose:** This document defines *what* gets built and *why*. It is the selection filter, pricing logic, and kill discipline for the Creator Ops Portfolio. Claude Code should read this at the start of every session. Any proposed tool or feature that conflicts with this thesis requires an explicit, logged decision in `BUILD_LOG.md` to proceed.
+> **Purpose:** This document defines _what_ gets built and _why_. It is the selection filter, pricing logic, and kill discipline for the Creator Ops Portfolio. Claude Code should read this at the start of every session. Any proposed tool or feature that conflicts with this thesis requires an explicit, logged decision in `BUILD_LOG.md` to proceed.
 
 ---
 
@@ -16,16 +16,17 @@ Core loop:
 4. Kill or freeze what doesn't stick. Double down on what does.
 5. Cross-tool data compounds into the moat.
 
-**What the speed advantage is for:** serving users better — faster fixes, tighter workflow fit, more experiments. It is *not* for shipping volume as a vanity metric or selling the dream of shipping. Every tool must be genuinely useful to a working creator.
+**What the speed advantage is for:** serving users better — faster fixes, tighter workflow fit, more experiments. It is _not_ for shipping volume as a vanity metric or selling the dream of shipping. Every tool must be genuinely useful to a working creator.
 
 ## 2. Target Buyer
 
 **Solo creators actively doing brand deals.** Working definition: roughly 10K–500K subscribers, doing 1–10 deals per quarter, managing them in spreadsheets and email threads, with no manager or agency.
 
 Reasoning:
+
 - **Below ~10K subs:** wants sponsors but doesn't have them. Will use free tools and churn. Not a buyer.
 - **Above ~500K:** has a manager or agency. The buyer becomes the agency — different product, different sales motion. Out of scope.
-- **The middle band:** real revenue at stake, real pain, nobody to delegate to, and *reachable* — active on X/Twitter and YouTube, talks publicly about workflow, trusts tools recommended by other creators.
+- **The middle band:** real revenue at stake, real pain, nobody to delegate to, and _reachable_ — active on X/Twitter and YouTube, talks publicly about workflow, trusts tools recommended by other creators.
 
 **Definition is subscriber-based, deliberately.** (Decided 2026-07-13.) Subscriber bands are simpler for marketing and communication; deal-volume and niche nuance stays out of buyer targeting. Niche-level differences (sponsor rates, category norms) get expressed later as **"niche templates" in the media kit generator**, not in buyer qualification.
 
@@ -40,6 +41,7 @@ Why 60 seconds: that is the attention span of the distribution channels this buy
 Secondary function: it forces every tool to have **one sharp, frequent, annoying job**. One-job tools are also the fastest to build and maintain with Claude Code — the filter aligns product, marketing, and build velocity simultaneously.
 
 Examples:
+
 - ✅ Sponsor deal tracker — passes.
 - ✅ Media kit generator — everyone hates making them; sponsors ask constantly.
 - ❌ "Creator analytics dashboard" — vague, broad, crowded market.
@@ -51,18 +53,20 @@ Examples:
 **One subscription, everything included: $20–30/mo.** No per-tool pricing.
 
 Why a bundle:
+
 1. **Fewer churn decision points.** One $25 decision beats five $5 decisions, even at the same total.
 2. **Umbrella for supporting tools.** A rate calculator may never justify its own subscription but meaningfully increases bundle stickiness.
 3. **Feeds the data moat.** The cross-tool loop (deals → rates → media kit → invoices) only exists if users adopt multiple tools. Bundle pricing removes all friction from trying the next tool. The data loop is the only durable moat, so pricing must feed it.
 
 Why $20–30 specifically:
+
 - The buyer's alternative is a free spreadsheet **plus** invisible losses: forgotten follow-ups, underpriced deals. One mid-tier sponsorship in this band is $500–5,000. If the bundle saves one botched deal or lifts one negotiation 10% per year, it pays for itself many times over.
 - But the buyer mentally categorizes software with existing subscriptions (Adobe, TubeBuddy, Canva: ~$10–55/mo). Pricing must stay **impulse-purchasable with no sales call** — the model has no sales team.
 - $20–30 = "premium but frictionless."
 
 ## 5. Free Tier: Distribution by Artifact
 
-**Rule: tools whose *output travels to third parties* are free. Tools whose value is private, ongoing workflow are paid.**
+**Rule: tools whose _output travels to third parties_ are free. Tools whose value is private, ongoing workflow are paid.**
 
 - A media kit gets sent to sponsors. An invoice gets sent to brands. A rate card may be shared publicly. Every outward artifact is a branded impression in front of exactly the two audiences that matter: other creators and the brands that sponsor them.
 - The tracker, deal pipeline, and reminders deliver private, recurring utility — which is what justifies recurring billing.
@@ -71,9 +75,9 @@ This gives a principled call for every future tool: **outward-facing artifact �
 
 ### The Cold-Start Rule (mandatory for all free tools)
 
-> **Every free tool must deliver its full core value from public or user-entered data on first use. Bundle data may only *enhance* a free tool, never *gate* it.**
+> **Every free tool must deliver its full core value from public or user-entered data on first use. Bundle data may only _enhance_ a free tool, never _gate_ it.**
 
-Example — media kit generator: core content is *channel* data (subs, avg views, engagement, demographics), pulled from the YouTube API via a pasted URL or OAuth, plus a few manual fields. Complete, polished output in ~5 minutes with zero tracker data. Bundle integration is the *upgrade path*: verified sponsor logos from real deals, actual campaign performance, self-updating stats ("your media kit updates itself when your deals do"). Cold-start converts; data loop retains.
+Example — media kit generator: core content is _channel_ data (subs, avg views, engagement, demographics), pulled from the YouTube API via a pasted URL or OAuth, plus a few manual fields. Complete, polished output in ~5 minutes with zero tracker data. Bundle integration is the _upgrade path_: verified sponsor logos from real deals, actual campaign performance, self-updating stats ("your media kit updates itself when your deals do"). Cold-start converts; data loop retains.
 
 A free tool that requires paid-tool data cannot do its distribution job. This rule is non-negotiable.
 
@@ -88,7 +92,7 @@ The portfolio's economics depend on failed tools costing **one week, not one qua
   - **Disappointment test** — qualitative: "how disappointed would you be if this disappeared?"
 - **Outcomes:**
   - **Kill** = remove, only if the tool actively confuses or clutters.
-  - **Freeze** = stop development, keep running if maintenance is near-zero. *Default outcome for misses* — removing a tool users touched is a trust cost even at low usage.
+  - **Freeze** = stop development, keep running if maintenance is near-zero. _Default outcome for misses_ — removing a tool users touched is a trust cost even at low usage.
   - **Continue/invest** = met thresholds; eligible for enhancement work.
 
 ## 7. Explicit Rejections
@@ -105,13 +109,14 @@ Written down so neither Claude Code nor future-us drifts:
 **Free tools are near-zero marginal cost.** The YouTube Data API is quota-based, not billed (channel stats ≈ 1–3 units of a 10K/day default quota); PDF generation is seconds of serverless compute; hosted kit pages and per-user storage are negligible on Vercel/Neon. Realistic marginal cost per free user: fractions of a cent. The true costs of free users are **API quota management at scale** and **support attention** — infrastructure cost does not threaten the artifact rule.
 
 **Profitability therefore hinges on conversion, and the strategy is explicit:**
+
 1. **Paid tools must be independently excellent.** The tracker passes the demo test on its own merits; paid tools are never mere upsells. This is the primary strategy — a paid product strong enough that conversion is not an issue.
-2. **Free tools carry structural, contextual conversion moments** — never nags. A creator generating a media kit is *at that moment* actively pursuing sponsors: the single best moment to show the tracker ("when a brand replies to this kit, where does that deal go?"). Other mechanics: stale-stats reminders, verified-deal badges, self-updating kits.
+2. **Free tools carry structural, contextual conversion moments** — never nags. A creator generating a media kit is _at that moment_ actively pursuing sponsors: the single best moment to show the tracker ("when a brand replies to this kit, where does that deal go?"). Other mechanics: stale-stats reminders, verified-deal badges, self-updating kits.
 
 **North-star conversion metric: free-to-paid conversion within 30 days of first artifact.** Benchmark context: typical freemium converts 2–5%; tool-gated freemium aimed at an already-qualified audience (media-kit makers have deal intent by definition) should beat that. If conversion is weak, the fix is sharpening the paid tools — **never gating the free ones.**
 
 ## 9. Open Questions / Revisit Later
 
 - ~~Deal volume vs. subscriber band~~ — **resolved: subscriber-based** (see §2). Niche/rate nuance deferred to future media-kit "niche templates."
-- Exact free-tier structure at scale: current position is *whole tools free by the artifact rule* (not usage-limited versions of everything). Revisit if free-tool infra costs become material.
+- Exact free-tier structure at scale: current position is _whole tools free by the artifact rule_ (not usage-limited versions of everything). Revisit if free-tool infra costs become material.
 - Agency/manager tier as a future expansion — explicitly out of scope for now.

@@ -186,7 +186,12 @@ export async function sendDueReminders(
 
   const byUser = new Map<
     string,
-    { email: string; userName: string; due: DeliverableReminder[]; over: OverdueReminder[] }
+    {
+      email: string;
+      userName: string;
+      due: DeliverableReminder[];
+      over: OverdueReminder[];
+    }
   >();
   for (const d of dueSoon) {
     const entry = byUser.get(d.userId) ?? {

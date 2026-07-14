@@ -1,21 +1,21 @@
 # CHASSIS_SPEC.md
 
-> **Purpose:** This document defines *how* every tool gets built. The chassis is the shared infrastructure every portfolio tool plugs into: one auth, one billing, one design system, one deployment pipeline, one schema convention. A new tool is a **domain module added to the chassis, never a new app.** This is what makes tool N+1 a one-week build instead of a one-month build, and it is what makes the cross-tool data loop physically possible.
+> **Purpose:** This document defines _how_ every tool gets built. The chassis is the shared infrastructure every portfolio tool plugs into: one auth, one billing, one design system, one deployment pipeline, one schema convention. A new tool is a **domain module added to the chassis, never a new app.** This is what makes tool N+1 a one-week build instead of a one-month build, and it is what makes the cross-tool data loop physically possible.
 
 ---
 
 ## 1. Stack (fixed decisions)
 
-| Layer | Choice | Notes |
-|---|---|---|
-| Framework | Next.js 14 App Router | Server components by default; client components only where interactivity demands |
-| Language | TypeScript, strict mode | No `any` without a logged justification |
-| Styling | Tailwind + shadcn/ui | shadcn components are the design system baseline; see §5 |
-| ORM | Drizzle | Schema as code, migrations checked in |
-| Database | Neon Postgres | Single database, schema-per-domain conventions (§3) |
-| Auth | Auth.js v5 | One account across all tools; YouTube OAuth as a first-class provider |
-| Payments | Stripe (subscriptions) | One product, one price (bundle); free tools require account but no payment method |
-| Hosting | Vercel | Single deployment; tools are routes, not separate deploys |
+| Layer     | Choice                  | Notes                                                                             |
+| --------- | ----------------------- | --------------------------------------------------------------------------------- |
+| Framework | Next.js 14 App Router   | Server components by default; client components only where interactivity demands  |
+| Language  | TypeScript, strict mode | No `any` without a logged justification                                           |
+| Styling   | Tailwind + shadcn/ui    | shadcn components are the design system baseline; see §5                          |
+| ORM       | Drizzle                 | Schema as code, migrations checked in                                             |
+| Database  | Neon Postgres           | Single database, schema-per-domain conventions (§3)                               |
+| Auth      | Auth.js v5              | One account across all tools; YouTube OAuth as a first-class provider             |
+| Payments  | Stripe (subscriptions)  | One product, one price (bundle); free tools require account but no payment method |
+| Hosting   | Vercel                  | Single deployment; tools are routes, not separate deploys                         |
 
 Stack changes are chassis-level decisions: they require a `BUILD_LOG.md` entry with reasoning and affect all tools.
 
@@ -52,6 +52,7 @@ Single repo, single Next.js app. Tools are **domains**, isolated behind clear bo
 ```
 
 **Boundary rules:**
+
 1. A domain may import from `/core` and `/lib`. A domain may **not** import from another domain's internals.
 2. Cross-domain data access goes through the other domain's exported `queries.ts`/`actions.ts` interface only. (Example: media-kit reads verified sponsors via `tracker`'s exported query, never via raw table access.)
 3. Routes contain no business logic — they compose domain components and call domain actions.
