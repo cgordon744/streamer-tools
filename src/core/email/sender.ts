@@ -17,7 +17,12 @@ export type EmailSender = {
   send(message: EmailMessage): Promise<void>;
 };
 
-const FROM_ADDRESS = "Streamer Tools <reminders@streamer-tools.app>";
+// Resend rejects from-addresses on unverified domains; its onboarding
+// address works on every account (but only delivers to the account owner —
+// fine while the founder is the only user). Set EMAIL_FROM once a real
+// domain is verified in Resend.
+const FROM_ADDRESS =
+  process.env.EMAIL_FROM ?? "Streamer Tools <onboarding@resend.dev>";
 
 const resendSender = (apiKey: string): EmailSender => ({
   name: "resend",
