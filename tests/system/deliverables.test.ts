@@ -116,13 +116,15 @@ describe("deliverable service", () => {
       title: "Upload video",
       dueDate: isoDaysFromToday(4),
     });
-    expect((await getDealStats(user)).nextDeliverableDate).toBe(
+    expect((await getDealStats(user, todayIso())).nextDeliverableDate).toBe(
       isoDaysFromToday(4),
     );
 
     // Completing it clears the date; nothing else is upcoming.
     await setDeliverableCompleted(user, item.id, true);
-    expect((await getDealStats(user)).nextDeliverableDate).toBeNull();
+    expect(
+      (await getDealStats(user, todayIso())).nextDeliverableDate,
+    ).toBeNull();
   });
 
   it("soft-deleting a sponsor keeps its deliverables out of stats", async () => {
@@ -138,7 +140,7 @@ describe("deliverable service", () => {
     await deleteSponsor(user, sponsor.id);
     // The deal is soft-deleted with the sponsor; its checklist items must
     // stop surfacing as the next deliverable.
-    const stats = await getDealStats(user);
+    const stats = await getDealStats(user, todayIso());
     expect(stats.activeCount).toBe(0);
     expect(stats.nextDeliverableDate).toBeNull();
   });

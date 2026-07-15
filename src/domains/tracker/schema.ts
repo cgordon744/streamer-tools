@@ -1,10 +1,12 @@
 import {
   date,
+  foreignKey,
   index,
   integer,
   pgTable,
   text,
   timestamp,
+  uniqueIndex,
   uuid,
 } from "drizzle-orm/pg-core";
 
@@ -37,7 +39,12 @@ export const sponsors = pgTable(
     // creators ask for things back. All reads filter on this being null.
     deletedAt: timestamp("deleted_at", { withTimezone: true }),
   },
-  (table) => [index("tracker_sponsors_user_id_idx").on(table.userId)],
+  (table) => [
+    index("tracker_sponsors_user_id_idx").on(table.userId),
+    // Referenced by deals' composite ownership FK (id is already unique;
+    // Postgres just needs the pair indexed to target it).
+    uniqueIndex("tracker_sponsors_id_user_id_uidx").on(table.id, table.userId),
+  ],
 );
 
 export type Sponsor = typeof sponsors.$inferSelect;
@@ -50,9 +57,8 @@ export const deals = pgTable(
     userId: uuid("user_id")
       .notNull()
       .references(() => users.id, { onDelete: "cascade" }),
-    sponsorId: uuid("sponsor_id")
-      .notNull()
-      .references(() => sponsors.id, { onDelete: "cascade" }),
+    // Composite FK below pins the sponsor to the same owner.
+    sponsorId: uuid("sponsor_id").notNull(),
     // Plain text, not a DB enum (CHASSIS_SPEC §4) — the value set lives in
     // /core/config/deals.ts and is enforced by zod at the action boundary.
     status: text("status").$type<DealStatus>().notNull().default("lead"),
@@ -81,6 +87,16 @@ export const deals = pgTable(
   (table) => [
     index("tracker_deals_user_id_idx").on(table.userId),
     index("tracker_deals_sponsor_id_idx").on(table.sponsorId),
+    // Referenced by deliverables' composite ownership FK.
+    uniqueIndex("tracker_deals_id_user_id_uidx").on(table.id, table.userId),
+    // DB-level backstop for the ownership invariant the action layer
+    // enforces: a deal's sponsor must belong to the same user. Postgres
+    // rejects the row even if a future bug bypasses the checks in code.
+    foreignKey({
+      name: "tracker_deals_sponsor_owner_fk",
+      columns: [table.sponsorId, table.userId],
+      foreignColumns: [sponsors.id, sponsors.userId],
+    }).onDelete("cascade"),
   ],
 );
 
@@ -94,9 +110,8 @@ export const deliverables = pgTable(
     userId: uuid("user_id")
       .notNull()
       .references(() => users.id, { onDelete: "cascade" }),
-    dealId: uuid("deal_id")
-      .notNull()
-      .references(() => deals.id, { onDelete: "cascade" }),
+    // Composite FK below pins the deal to the same owner.
+    dealId: uuid("deal_id").notNull(),
     title: text("title").notNull(),
     dueDate: date("due_date"),
     completedAt: timestamp("completed_at", { withTimezone: true }),
@@ -113,6 +128,12 @@ export const deliverables = pgTable(
   (table) => [
     index("tracker_deliverables_user_id_idx").on(table.userId),
     index("tracker_deliverables_deal_id_idx").on(table.dealId),
+    // DB-level backstop: a deliverable's deal must belong to the same user.
+    foreignKey({
+      name: "tracker_deliverables_deal_owner_fk",
+      columns: [table.dealId, table.userId],
+      foreignColumns: [deals.id, deals.userId],
+    }).onDelete("cascade"),
   ],
 );
 

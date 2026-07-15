@@ -4,6 +4,8 @@ import { ModeToggle } from "@/components/mode-toggle";
 import { Toaster } from "@/components/ui/sonner";
 import { requireUserId } from "@/core/auth/session";
 import { recordHeartbeat } from "@/core/events/track";
+import { TIMEZONE_COOKIE } from "@/core/time/today";
+import { TimezoneSync } from "@/core/time/timezone-sync";
 
 import { AppNav } from "./app-nav";
 import { AppSidebar, SIDEBAR_DEFAULT_WIDTH } from "./app-sidebar";
@@ -28,6 +30,7 @@ export default async function AppLayout({
 
   return (
     <div className="bg-muted/40 min-h-screen md:flex">
+      <TimezoneSync current={cookieStore.get(TIMEZONE_COOKIE)?.value} />
       <AppSidebar initialCollapsed={collapsed} initialWidth={width}>
         <AppNav />
         <div className="flex items-center gap-1 md:mt-auto md:flex-col md:items-stretch md:gap-0 md:border-t md:pt-3">

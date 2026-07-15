@@ -1,6 +1,6 @@
 "use server";
 
-import { AuthError } from "next-auth";
+import { AuthError, CredentialsSignin } from "next-auth";
 
 import { signIn, signOut } from "@/auth";
 
@@ -17,6 +17,9 @@ export async function authenticate(
       redirectTo: "/",
     });
   } catch (error) {
+    if (error instanceof CredentialsSignin && error.code === "rate_limited") {
+      return "Too many login attempts. Try again in a few minutes.";
+    }
     if (error instanceof AuthError) {
       return "Invalid email or password.";
     }

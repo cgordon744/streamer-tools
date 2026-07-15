@@ -10,7 +10,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { CONTENT_TYPE_LABELS } from "@/core/config/deals";
-import { formatDueDate, todayIso } from "@/lib/dates";
+import { formatDueDate } from "@/lib/dates";
 import { formatCents } from "@/lib/money";
 import { PaymentStatusBadge } from "@/domains/tracker/components/payment-status-badge";
 import type { DealWithSponsor } from "@/domains/tracker/queries";
@@ -19,10 +19,12 @@ export function DealsTable({
   deals,
   sponsors,
   emptyMessage,
+  today,
 }: {
   deals: DealWithSponsor[];
   sponsors: SponsorOption[];
   emptyMessage: string;
+  today: string;
 }) {
   if (deals.length === 0) {
     return (
@@ -31,8 +33,6 @@ export function DealsTable({
       </p>
     );
   }
-
-  const today = todayIso();
 
   return (
     <Table>

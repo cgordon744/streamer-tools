@@ -1,10 +1,10 @@
 import { DealFormDialog } from "@/domains/tracker/components/deal-form-dialog";
 import { PipelineBoard } from "@/domains/tracker/components/pipeline-board";
 import { StatCards } from "@/domains/tracker/components/stat-cards";
-import { todayIso } from "@/lib/dates";
 import { requireUserId } from "@/core/auth/session";
 import { hasAccess } from "@/core/billing/entitlements";
 import { UpgradeNotice } from "@/core/billing/upgrade-notice";
+import { getToday } from "@/core/time/today";
 import {
   getDealStats,
   listDeals,
@@ -28,10 +28,11 @@ export default async function DashboardPage({
     return <UpgradeNotice toolName="Sponsor Deal Tracker" />;
   }
   const params = await searchParams;
+  const today = await getToday();
 
   const [sponsors, stats, deliverables] = await Promise.all([
     listSponsors(userId),
-    getDealStats(userId),
+    getDealStats(userId, today),
     listDeliverables(userId),
   ]);
   const sponsorOptions = sponsors.map((s) => ({ id: s.id, name: s.name }));
@@ -65,7 +66,7 @@ export default async function DashboardPage({
         deals={deals}
         sponsors={sponsorOptions}
         deliverables={deliverables}
-        today={todayIso()}
+        today={today}
       />
     </div>
   );

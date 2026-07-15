@@ -127,12 +127,33 @@ describe("deal service", () => {
     );
     await createDeal(user, dealInput(sponsor, { status: "paid", amount: 400 }));
 
-    const stats = await getDealStats(user);
+    const stats = await getDealStats(user, todayIso());
     expect(stats.activeCount).toBe(2); // lead + content_delivered
     expect(stats.inFlightCents).toBe(300);
     expect(stats.overdueCount).toBe(1);
     expect(stats.overdueCents).toBe(200);
     expect(stats.nextDeliverableDate).toBe(isoDaysFromToday(5));
+  });
+
+  it("computes overdue relative to the caller's today, not the server's", async () => {
+    const user = await createTestUser();
+    const sponsor = (await createSponsor(user, sponsorInput)).id;
+    // Due "today": not yet overdue from today's perspective, overdue from
+    // tomorrow's — the timezone fix hinges on this parameter being honored.
+    await createDeal(
+      user,
+      dealInput(sponsor, {
+        status: "invoiced",
+        paymentDueDate: isoDaysFromToday(0),
+      }),
+    );
+
+    expect((await getDealStats(user, isoDaysFromToday(0))).overdueCount).toBe(
+      0,
+    );
+    expect((await getDealStats(user, isoDaysFromToday(1))).overdueCount).toBe(
+      1,
+    );
   });
 
   it("does not flag paid or dead deals as overdue", async () => {
@@ -154,7 +175,7 @@ describe("deal service", () => {
       }),
     );
 
-    const stats = await getDealStats(user);
+    const stats = await getDealStats(user, todayIso());
     expect(stats.overdueCount).toBe(0);
   });
 
@@ -214,7 +235,7 @@ describe("deal service", () => {
 
     it("keeps stats scoped to the acting user", async () => {
       const freshUser = await createTestUser();
-      const stats = await getDealStats(freshUser);
+      const stats = await getDealStats(freshUser, todayIso());
       expect(stats).toEqual({
         activeCount: 0,
         inFlightCents: 0,

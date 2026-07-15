@@ -26,8 +26,29 @@ function toIso(d: Date): string {
 }
 
 // Rendered server-side and passed down so server and client agree on "today".
+// Uses the server's clock/zone — only correct as a fallback; request-scoped
+// code should go through core/time's getToday(), which knows the user's zone.
 export function todayIso(): string {
   return toIso(new Date());
+}
+
+// Today's date in an IANA timezone ("America/Denver"). en-CA formats as
+// YYYY-MM-DD. The zone comes from a client-writable cookie, so an invalid
+// value must fall back rather than throw.
+export function todayInTimeZone(timeZone: string | undefined): string {
+  if (timeZone) {
+    try {
+      return new Intl.DateTimeFormat("en-CA", {
+        timeZone,
+        year: "numeric",
+        month: "2-digit",
+        day: "2-digit",
+      }).format(new Date());
+    } catch {
+      // Unknown zone — fall through to the server clock.
+    }
+  }
+  return todayIso();
 }
 
 // "soon" = within the next 7 days. YYYY-MM-DD compares lexicographically,

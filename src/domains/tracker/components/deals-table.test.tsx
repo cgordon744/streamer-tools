@@ -32,7 +32,14 @@ const deal: DealWithSponsor = {
 
 describe("DealsTable", () => {
   it("shows the empty message when there are no deals", () => {
-    render(<DealsTable deals={[]} sponsors={[]} emptyMessage="Nothing yet." />);
+    render(
+      <DealsTable
+        deals={[]}
+        sponsors={[]}
+        emptyMessage="Nothing yet."
+        today="2026-07-15"
+      />,
+    );
     expect(screen.getByText("Nothing yet.")).toBeTruthy();
     expect(screen.queryByRole("table")).toBeNull();
   });
@@ -43,6 +50,7 @@ describe("DealsTable", () => {
         deals={[deal]}
         sponsors={[{ id: deal.sponsorId, name: "NordVPN" }]}
         emptyMessage="Nothing yet."
+        today="2026-07-15"
       />,
     );
 

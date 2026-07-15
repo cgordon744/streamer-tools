@@ -113,12 +113,13 @@ export async function updateDeal(
 // Stage moves sync payment status forward (never back): landing on the
 // `invoiced` stage marks an un-invoiced deal invoiced, landing on `paid`
 // marks it paid. Direct payment-status edits happen in the deal form.
-function paymentSyncFor(
-  status: DealStatus,
-  current: PaymentStatus,
-): PaymentStatus | undefined {
-  if (status === "paid") return current === "paid" ? undefined : "paid";
-  if (status === "invoiced" && current === "not_invoiced") return "invoiced";
+// Expressed in SQL so the sync and the status write are one atomic
+// statement — no read-then-write window between concurrent moves.
+function paymentSyncFor(status: DealStatus) {
+  if (status === "paid") return "paid" as const;
+  if (status === "invoiced") {
+    return sql<PaymentStatus>`case when ${deals.paymentStatus} = 'not_invoiced' then 'invoiced' else ${deals.paymentStatus} end`;
+  }
   return undefined;
 }
 
@@ -128,9 +129,7 @@ export async function updateDealStatus(
   status: DealStatus,
 ): Promise<Deal | null> {
   const db = getDb();
-  const existing = await getDeal(userId, dealId);
-  if (!existing) return null;
-  const paymentStatus = paymentSyncFor(status, existing.paymentStatus);
+  const paymentStatus = paymentSyncFor(status);
   const [deal] = await db
     .update(deals)
     .set({
@@ -162,10 +161,15 @@ export type DealStats = {
 };
 
 const activeDeal = sql`${deals.status} not in ('paid', 'dead')`;
-const overduePayment = sql`${deals.paymentStatus} <> 'paid' and ${deals.status} <> 'dead' and ${deals.paymentDueDate} < current_date`;
 
-export async function getDealStats(userId: string): Promise<DealStats> {
+// `today` is computed in the user's timezone (core/time getToday()), not the
+// server's — SQL current_date is UTC on Vercel and flips a day early/late.
+export async function getDealStats(
+  userId: string,
+  today: string,
+): Promise<DealStats> {
   const db = getDb();
+  const overduePayment = sql`${deals.paymentStatus} <> 'paid' and ${deals.status} <> 'dead' and ${deals.paymentDueDate} < ${today}::date`;
   const [row] = await db
     .select({
       activeCount: sql<string>`count(*) filter (where ${activeDeal})`,
@@ -185,13 +189,13 @@ export async function getDealStats(userId: string): Promise<DealStats> {
         (select min(d.deliverable_due_date) from tracker_deals d
           where d.user_id = ${userId} and d.deleted_at is null
             and d.status not in ('paid', 'dead')
-            and d.deliverable_due_date >= current_date),
+            and d.deliverable_due_date >= ${today}::date),
         (select min(dv.due_date) from tracker_deliverables dv
           inner join tracker_deals dd on dv.deal_id = dd.id
           where dv.user_id = ${userId}
             and dv.deleted_at is null
             and dv.completed_at is null
-            and dv.due_date >= current_date
+            and dv.due_date >= ${today}::date
             and dd.deleted_at is null
             and dd.status not in ('paid', 'dead'))
       )`,
@@ -292,32 +296,35 @@ export async function deleteSponsor(
 ): Promise<boolean> {
   const db = getDb();
   // Soft-delete the sponsor and its deals together (mirrors the old FK
-  // cascade); both stay recoverable.
-  const deleted = await db
-    .update(sponsors)
-    .set({ deletedAt: new Date(), updatedAt: new Date() })
-    .where(
-      and(
-        eq(sponsors.id, sponsorId),
-        eq(sponsors.userId, userId),
-        isNull(sponsors.deletedAt),
-      ),
-    )
-    .returning({ id: sponsors.id });
-  if (deleted.length === 0) {
-    return false;
-  }
-  await db
-    .update(deals)
-    .set({ deletedAt: new Date(), updatedAt: new Date() })
-    .where(
-      and(
-        eq(deals.sponsorId, sponsorId),
-        eq(deals.userId, userId),
-        isNull(deals.deletedAt),
-      ),
-    );
-  return true;
+  // cascade); both stay recoverable. One transaction — a crash between the
+  // two statements must not leave a hidden sponsor with visible deals.
+  return db.transaction(async (tx) => {
+    const deleted = await tx
+      .update(sponsors)
+      .set({ deletedAt: new Date(), updatedAt: new Date() })
+      .where(
+        and(
+          eq(sponsors.id, sponsorId),
+          eq(sponsors.userId, userId),
+          isNull(sponsors.deletedAt),
+        ),
+      )
+      .returning({ id: sponsors.id });
+    if (deleted.length === 0) {
+      return false;
+    }
+    await tx
+      .update(deals)
+      .set({ deletedAt: new Date(), updatedAt: new Date() })
+      .where(
+        and(
+          eq(deals.sponsorId, sponsorId),
+          eq(deals.userId, userId),
+          isNull(deals.deletedAt),
+        ),
+      );
+    return true;
+  });
 }
 
 export async function listDeliverables(userId: string): Promise<Deliverable[]> {

@@ -4,6 +4,7 @@ import { DEAL_STATUSES, type DealStatus } from "@/core/config/deals";
 import { requireUserId } from "@/core/auth/session";
 import { hasAccess } from "@/core/billing/entitlements";
 import { UpgradeNotice } from "@/core/billing/upgrade-notice";
+import { getToday } from "@/core/time/today";
 import { listDeals } from "@/domains/tracker/queries";
 import { listSponsors } from "@/domains/tracker/queries";
 
@@ -57,6 +58,7 @@ export default async function DealsPage({
         <DealsTable
           deals={deals}
           sponsors={sponsorOptions}
+          today={await getToday()}
           emptyMessage={
             status || sponsorId
               ? "No deals match these filters."
