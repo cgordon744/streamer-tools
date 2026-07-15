@@ -131,3 +131,16 @@
 - **Test backfill (26 new, 99 total):** payments overdue/day-math unit tests (all branches, month/year boundaries); deliverables system tests (ordering, toggle, soft-delete, stats, tenant isolation); exported-data-contract system tests (verified-sponsor threshold, history excludes soft-deleted, payable filters); reminders system tests (48h boundary, completed/dead exclusions, deal-level dates, day-1/6/8 cadence, per-user digest).
 - **Real bug caught by the backfill:** `getDealStats`' next-deliverable subquery ignored the parent deal's state — checklist items of soft-deleted or paid/dead deals still surfaced as "next deliverable". Root cause: drizzle renders interpolated column refs unqualified inside raw `sql\`\``, which was fine single-table but ambiguous once the subquery joined deals. Fixed with explicitly aliased raw SQL; regression tests added.
 - **Standing rule:** every new feature ships with comprehensive tests in the same commit (happy path, boundaries, exclusions, tenant isolation).
+
+### 2026-07-14 — Doc corrections: stack version + freeze-not-delete policy (founder decisions)
+
+Two founder-directed changes to the living contracts (docs only, no code):
+
+- **Chassis stack table → Next.js 16.** `CHASSIS_SPEC.md` §1 now reads "Next.js 16 App Router" (was 14), matching what has been built, tested, and deployed since day one; added a note that request interception is `src/proxy.ts` (Next 16's rename of `middleware.ts`). This closes the drift the 2026-07-13 audit flagged and the earlier log entry recommended.
+- **Kill discipline → freeze discipline (never remove from users).** Founder decision: a tool or feature that misses its metrics is **frozen** (development stops, it keeps running for existing users), **never deleted**. Rationale: short eval windows + small early cohorts make metrics noisy, and pulling a working feature away reads as unreliable — a trust cost that outweighs any tidiness gain. Removal is now reserved solely for genuine harm (security/legal/hard-broken), and even then the preference is disable-behind-a-flag + retain data (the soft-delete convention), not destroy.
+  - `PORTFOLIO_THESIS.md` §6 renamed "Kill Criteria" → "Evaluation Criteria"; outcomes are now **Continue/invest** or **Freeze** only; added an explicit "we do not remove tools or features based on weak metrics" paragraph. Also updated the doc's purpose line ("freeze discipline") and the core-loop step 4.
+  - `TOOL_TEMPLATE.md`: dropped "Killed" from the Status enum, renamed §7 to "Evaluation Criteria", outcome mapping and Evaluation Record now offer Continue | Freeze only.
+  - `CHASSIS_SPEC.md`: reworded the boundary-rules rationale (freezing/reworking, not killing) and the §7 instrumentation reference.
+  - `spec/tracker-spec.md`: §7 renamed; the wedge tool's special condition now says a miss triggers a thesis-level review rather than even a freeze.
+- **Not edited:** `docs/AUDIT.md` and prior BUILD_LOG entries — point-in-time records; the audit's "Next.js 14" line is the finding that recommended today's fix, left intact as history.
+- **Touched /core or boundaries?** No code. These are thesis-/chassis-level doc changes, logged here per CHASSIS_SPEC §1/§8.

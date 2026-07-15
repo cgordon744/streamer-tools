@@ -62,15 +62,15 @@ The tracker is the portfolio's primary data _producer_ — the root of the loop.
 
 **Build budget:** 1 week.
 
-## 7. Kill Criteria (pre-committed — DRAFT, needs founder sign-off)
+## 7. Evaluation Criteria (pre-committed — DRAFT, needs founder sign-off)
 
-**Special condition:** the tracker is the wedge and bundle anchor. A miss here doesn't trigger freeze/kill — it triggers a thesis-level review, because the portfolio is built on this tool converting. Thresholds below are therefore _health checks_, evaluated at launch + 60 days:
+**Special condition:** the tracker is the wedge and bundle anchor. A miss here doesn't even trigger a freeze — it triggers a thesis-level review, because the portfolio is built on this tool converting. Thresholds below are therefore _health checks_, evaluated at launch + 60 days:
 
-| Signal                                                  | Threshold (draft) | Actual |
-| ------------------------------------------------------- | ----------------- | ------ |
-| Activation: % of signups creating ≥1 deal in first week | 60%               |        |
-| Retention: % of activated users active weekly           | 40%               |        |
-| Disappointment: % "very disappointed" if removed (n≥10) | 40%               |        |
+| Signal                                                      | Threshold (draft) | Actual |
+| ----------------------------------------------------------- | ----------------- | ------ |
+| Activation: % of signups creating ≥1 deal in first week     | 60%               |        |
+| Retention: % of activated users active weekly               | 40%               |        |
+| Disappointment: % "very disappointed" if it vanished (n≥10) | 40%               |        |
 
 - Meets 2–3 → invest; begin tool #2
 - Meets 0–1 → thesis review: wrong buyer, wrong job, or wrong execution — diagnose before building anything else

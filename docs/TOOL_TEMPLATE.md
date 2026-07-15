@@ -1,12 +1,12 @@
 # TOOL_TEMPLATE.md
 
-> **Purpose:** The repeatable spec format for proposing, building, and evaluating every portfolio tool. Copy this template to `/specs/<tool-name>.md`, fill it out **completely before any code is written**, and treat unfilled sections as a blocker. The kill criteria section is filled in _before launch_ — that pre-commitment is the point (thesis §6).
+> **Purpose:** The repeatable spec format for proposing, building, and evaluating every portfolio tool. Copy this template to `/specs/<tool-name>.md`, fill it out **completely before any code is written**, and treat unfilled sections as a blocker. The evaluation criteria section is filled in _before launch_ — that pre-commitment is the point (thesis §6).
 
 ---
 
 # Tool Spec: [Tool Name]
 
-**Status:** Proposed | In Build | Live (behind flag) | Launched | Frozen | Killed
+**Status:** Proposed | In Build | Live (behind flag) | Launched | Frozen
 **Domain folder:** `/domains/[name]`
 **Tier:** Free (artifact rule) | Paid (workflow rule)
 **Spec date:** YYYY-MM-DD · **Launch date:** — · **Evaluation date (launch + 60d):** —
@@ -57,20 +57,20 @@ This section is how the data loop compounds. A tool that neither consumes nor pr
 - **Explicitly out of v1:** bullet list — write down the tempting adjacencies now so build sessions don't drift
 - **Build budget:** 1 week. If the honest estimate exceeds it, cut scope or split the tool.
 
-## 7. Kill Criteria (pre-committed — fill in BEFORE launch)
+## 7. Evaluation Criteria (pre-committed — fill in BEFORE launch)
 
 Evaluated at launch + 60 days (thesis §6):
 
-| Signal                                                               | Threshold | Actual (fill at eval) |
-| -------------------------------------------------------------------- | --------- | --------------------- |
-| Activation: % of active bundle users who tried it ≥ once             | __%       |                       |
-| Retention: % of activated users returning weekly                     | __%       |                       |
-| Disappointment: % "very disappointed" if removed (qualitative, n≥10) | __%       |                       |
+| Signal                                                                | Threshold | Actual (fill at eval) |
+| --------------------------------------------------------------------- | --------- | --------------------- |
+| Activation: % of active bundle users who tried it ≥ once              | __%       |                       |
+| Retention: % of activated users returning weekly                      | __%       |                       |
+| Disappointment: % "very disappointed" if it disappeared (qual., n≥10) | __%       |                       |
 
 **Pre-committed outcome mapping:**
 
 - Meets 2–3 thresholds → **Continue/invest**
-- Meets 0–1 → **Freeze** (default) or **Kill** if it clutters/confuses
+- Meets 0–1 → **Freeze** — stop active development, keep the tool running for its existing users, fix only what breaks. We do not remove it (thesis §6).
 - Any special conditions: [e.g., "free tool: judged on signups + artifact shares instead of retention"]
 
 ## 8. Launch Checklist
@@ -83,4 +83,4 @@ Evaluated at launch + 60 days (thesis §6):
 
 ## 9. Evaluation Record (fill at +60d)
 
-Decision: Continue | Freeze | Kill · Reasoning (3 sentences max) · Logged in BUILD_LOG.md: [ ]
+Decision: Continue | Freeze · Reasoning (3 sentences max) · Logged in BUILD_LOG.md: [ ]

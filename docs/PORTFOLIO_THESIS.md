@@ -1,6 +1,6 @@
 # PORTFOLIO_THESIS.md
 
-> **Purpose:** This document defines _what_ gets built and _why_. It is the selection filter, pricing logic, and kill discipline for the Creator Ops Portfolio. Claude Code should read this at the start of every session. Any proposed tool or feature that conflicts with this thesis requires an explicit, logged decision in `BUILD_LOG.md` to proceed.
+> **Purpose:** This document defines _what_ gets built and _why_. It is the selection filter, pricing logic, and freeze discipline for the Creator Ops Portfolio. Claude Code should read this at the start of every session. Any proposed tool or feature that conflicts with this thesis requires an explicit, logged decision in `BUILD_LOG.md` to proceed.
 
 ---
 
@@ -13,7 +13,7 @@ Core loop:
 1. Ship a wedge tool (YouTube sponsor tracker).
 2. Add one focused tool at a time behind the same login, brand, and billing.
 3. Evaluate each tool against pre-committed criteria in a fixed window.
-4. Kill or freeze what doesn't stick. Double down on what does.
+4. Freeze what doesn't stick (stop investing, keep it running). Double down on what does.
 5. Cross-tool data compounds into the moat.
 
 **What the speed advantage is for:** serving users better — faster fixes, tighter workflow fit, more experiments. It is _not_ for shipping volume as a vanity metric or selling the dream of shipping. Every tool must be genuinely useful to a working creator.
@@ -81,18 +81,19 @@ Example — media kit generator: core content is _channel_ data (subs, avg views
 
 A free tool that requires paid-tool data cannot do its distribution job. This rule is non-negotiable.
 
-## 6. Kill Criteria
+## 6. Evaluation Criteria
 
-The portfolio's economics depend on failed tools costing **one week, not one quarter**. That only holds if tools actually get killed — and founders reliably don't kill things. So thresholds are **pre-committed before each tool ships** (in its `TOOL_TEMPLATE.md` spec) and evaluated at a fixed window.
+The portfolio's economics depend on failed tools costing **one week of build, not one quarter of investment**. That only holds if we actually _stop investing_ in duds — and founders reliably keep pouring dev time into things that aren't working. So thresholds are **pre-committed before each tool ships** (in its `TOOL_TEMPLATE.md` spec) and evaluated at a fixed window. The discipline is about where effort goes next, **not** about taking anything away from users.
 
-- **Evaluation window: 60 days** from launch. Long enough for a monthly-cadence workflow (deals happen roughly monthly) to show two usage cycles; short enough that a dud doesn't accumulate maintenance burden.
+- **Evaluation window: 60 days** from launch. Long enough for a monthly-cadence workflow (deals happen roughly monthly) to show two usage cycles; short enough that a dud doesn't quietly soak up development attention.
 - **Signals:**
   - **Activation** — did trial users touch it at all?
   - **Retention** — weekly return usage among activated users.
   - **Disappointment test** — qualitative: "how disappointed would you be if this disappeared?"
 - **Outcomes:**
-  - **Kill** = remove, only if the tool actively confuses or clutters.
-  - **Freeze** = stop development, keep running if maintenance is near-zero. _Default outcome for misses_ — removing a tool users touched is a trust cost even at low usage.
+  - **Continue/invest** = met thresholds; eligible for enhancement work and the next tool.
+  - **Freeze** = **the outcome for every miss.** Stop active development, keep the tool running for whoever uses it, and fix only what breaks. Maintenance on a frozen tool is near-zero by design (one sharp job, shared chassis), so leaving it up costs little.
+- **We do not remove tools or features from users based on weak metrics.** Short evaluation windows plus small early cohorts make the numbers noisy, and pulling a working feature away is a trust cost that outweighs the tidiness of removing it — it makes the whole portfolio feel unreliable. Underperformance always resolves to _freeze_, never _delete_. The only reason to fully retire something is genuine harm (a security or legal problem, or a hard-broken dependency), and even then the preference is to disable it behind a flag and **retain user data** (the schema's soft-delete convention exists for exactly this), not to destroy it.
   - **Continue/invest** = met thresholds; eligible for enhancement work.
 
 ## 7. Explicit Rejections
