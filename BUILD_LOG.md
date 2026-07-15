@@ -2,8 +2,8 @@
 
 ## NEEDS INPUT
 
-1. **Email sending credential (`RESEND_API_KEY` + `EMAIL_REMINDERS_ENABLED=true` in Vercel env)** — added 2026-07-13. The reminder pipeline (deliverable due in 48h, payment overdue) is built and runs on a daily Vercel cron, but no email-provider credential exists, so the sender is a console/log stub. To go live: create a Resend account + API key, set `RESEND_API_KEY` and `EMAIL_REMINDERS_ENABLED=true` in Vercel project env. No code change needed — the flag flips the sender in `src/core/email/sender.ts`. (Per session rules, no service signups were performed.)
-2. **`CRON_SECRET` in Vercel env** — added 2026-07-13. The cron route refuses to run unauthenticated in production until this is set (any random string; Vercel automatically sends it as a Bearer token to cron invocations). Generate with `openssl rand -base64 32` and add to Vercel project env.
+1. ~~**Email sending credential (`RESEND_API_KEY` + `EMAIL_REMINDERS_ENABLED=true` in Vercel env)**~~ — resolved 2026-07-15: founder created the Resend account and set both env vars; Vercel redeployed. End-to-end send pending first matching cron run (see 2026-07-15 entries).
+2. ~~**`CRON_SECRET` in Vercel env**~~ — resolved 2026-07-15: founder set it; verified externally (unauthenticated request now 401 instead of the 503 "not configured" response).
 3. ~~**Neon `DATABASE_URL`**~~ — resolved 2026-07-07: migration 0000 applied and production user seeded against the user's Neon project; login credentials verified through the pooled endpoint. Local dev still uses Docker Postgres. _2026-07-13 note: no prod DB credential exists on this machine; prod migrations now run as the Vercel release step instead (see Phase 2 entry)._
 4. ~~**Vercel deploy**~~ — resolved 2026-07-07: user imported the repo in the Vercel dashboard with `DATABASE_URL` (pooled Neon) + `AUTH_SECRET`. Live at https://streamer-tools-gilt.vercel.app — verified in production: unauthenticated redirect, credentials login → session, authenticated dashboard render. Deploys automatically on push to `main`.
 5. ~~**GitHub remote**~~ — resolved 2026-07-07: pushed to `git@github.com:cgordon744/streamer-tools.git` (SSH). CI runs on push; repo has since been made public.
@@ -157,3 +157,12 @@ Addressing the standing watch/note list (founder-directed session). Written befo
 
 - **Touched /core or boundaries?** Yes: new `/core/time` module, `/core/auth/rate-limit.ts` + `login_attempts` table (reasoning above). No boundary-rule changes.
 - **Not done (needs founder input):** Sentry (chassis §7 error tracking), `RESEND_API_KEY`/`EMAIL_REMINDERS_ENABLED`, `CRON_SECRET` — see NEEDS INPUT.
+
+### 2026-07-15 — Error tracking wired (Sentry, chassis §7) after founder provided env vars
+
+Founder resolved all three NEEDS INPUT items (Resend key + flag, `CRON_SECRET`, `SENTRY_DSN` in Vercel) and redeployed. Cron auth verified externally (401 unauthenticated, was 503). This entry logs the Sentry wiring — a `/core` change per CHASSIS_SPEC §8:
+
+- **What:** `@sentry/nextjs` (v10, peer-supports Next 16) initialized from `src/instrumentation.ts` (`register()` imports `core/errors/sentry-server.ts` / `sentry-edge.ts` per runtime; `onRequestError` = Sentry's `captureRequestError`). Server errors from RSC renders, route handlers, server actions, and the proxy now reach Sentry. Init is `enabled` only when `SENTRY_DSN` is set — local dev and CI (no DSN) stay no-op, so no code path depends on the service existing (mirrors the email-sender flag pattern).
+- **Scope decisions:** server-side only for now — the watch item was "server errors go nowhere"; client-side capture needs `NEXT_PUBLIC_` DSN exposure and `withSentryConfig` build wrapping (source-map upload, auth token), which is more chassis surgery than the alert problem warrants pre-launch. Tracing off (`tracesSampleRate: 0`) — error alerting is the job; performance tracing is spend with no current consumer.
+- **Verification route:** `/api/debug-sentry` throws on purpose (session-protected like every non-cron route). Kept permanently: it's the standing way to prove the error pipeline works after any chassis change.
+- **Touched /core or boundaries?** Yes: new `/core/errors` module + root `instrumentation.ts`. No boundary-rule changes. Glue-to-vendor-SDK has no meaningful unit surface (the signature is the deliverable, same reasoning as the entitlements stub); verification is the debug route against prod.
