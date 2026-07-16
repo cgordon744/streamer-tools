@@ -13,24 +13,28 @@ import {
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { authenticate } from "@/core/auth/actions";
+import { signup } from "@/core/auth/actions";
 
-export function LoginForm({ showSignupLink }: { showSignupLink: boolean }) {
+export function SignupForm() {
   const [errorMessage, formAction, isPending] = useActionState(
-    authenticate,
+    signup,
     undefined,
   );
 
   return (
     <Card className="w-full max-w-sm">
       <CardHeader>
-        <CardTitle>Streamer Tools</CardTitle>
+        <CardTitle>Create your account</CardTitle>
         <CardDescription>
-          Track your sponsorship deals. Log in to continue.
+          Track your sponsorship deals. Free to start.
         </CardDescription>
       </CardHeader>
       <CardContent>
         <form action={formAction} className="space-y-4">
+          <div className="space-y-2">
+            <Label htmlFor="name">Name or channel name</Label>
+            <Input id="name" name="name" autoComplete="name" required />
+          </div>
           <div className="space-y-2">
             <Label htmlFor="email">Email</Label>
             <Input
@@ -47,7 +51,19 @@ export function LoginForm({ showSignupLink }: { showSignupLink: boolean }) {
               id="password"
               name="password"
               type="password"
-              autoComplete="current-password"
+              autoComplete="new-password"
+              minLength={8}
+              required
+            />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="confirmPassword">Confirm password</Label>
+            <Input
+              id="confirmPassword"
+              name="confirmPassword"
+              type="password"
+              autoComplete="new-password"
+              minLength={8}
               required
             />
           </div>
@@ -55,16 +71,14 @@ export function LoginForm({ showSignupLink }: { showSignupLink: boolean }) {
             <p className="text-destructive text-sm">{errorMessage}</p>
           ) : null}
           <Button type="submit" className="w-full" disabled={isPending}>
-            {isPending ? "Logging in…" : "Log in"}
+            {isPending ? "Creating account…" : "Create account"}
           </Button>
-          {showSignupLink ? (
-            <p className="text-muted-foreground text-center text-sm">
-              New here?{" "}
-              <Link href="/signup" className="underline underline-offset-4">
-                Create an account
-              </Link>
-            </p>
-          ) : null}
+          <p className="text-muted-foreground text-center text-sm">
+            Already have an account?{" "}
+            <Link href="/login" className="underline underline-offset-4">
+              Log in
+            </Link>
+          </p>
         </form>
       </CardContent>
     </Card>

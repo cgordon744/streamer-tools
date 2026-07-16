@@ -1,15 +1,19 @@
-import { redirect } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 
 import { auth } from "@/auth";
 import { flags } from "@/core/config/flags";
 
-import { LoginForm } from "./login-form";
+import { SignupForm } from "./signup-form";
 
 export const metadata = {
-  title: "Log in — Streamer Tools",
+  title: "Sign up — Streamer Tools",
 };
 
-export default async function LoginPage() {
+export default async function SignupPage() {
+  if (!flags.signupEnabled) {
+    notFound();
+  }
+
   const session = await auth();
   if (session?.user) {
     redirect("/");
@@ -17,7 +21,7 @@ export default async function LoginPage() {
 
   return (
     <main className="flex min-h-screen items-center justify-center p-4">
-      <LoginForm showSignupLink={flags.signupEnabled} />
+      <SignupForm />
     </main>
   );
 }

@@ -10,6 +10,6 @@ export const config = {
   // api/cron is excluded from session auth — it authenticates via CRON_SECRET
   // in the route handler instead.
   matcher: [
-    "/((?!api/auth|api/cron|login|_next/static|_next/image|favicon.ico).*)",
+    "/((?!api/auth|api/cron|login|signup|_next/static|_next/image|favicon.ico).*)",
   ],
 };

@@ -33,3 +33,21 @@ export const loginAttempts = pgTable(
     index("login_attempts_ip_created_at_idx").on(table.ip, table.createdAt),
   ],
 );
+
+// Successful account creations by IP, for signup rate limiting — same
+// operational profile as login_attempts (pruned on write, security
+// bookkeeping, no soft delete). Separate table because the two limits have
+// different windows and clearing one must never reset the other.
+export const signupAttempts = pgTable(
+  "signup_attempts",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    ip: text("ip").notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => [
+    index("signup_attempts_ip_created_at_idx").on(table.ip, table.createdAt),
+  ],
+);
