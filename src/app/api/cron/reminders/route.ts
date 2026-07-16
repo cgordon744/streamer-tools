@@ -1,4 +1,5 @@
 import { getEmailSender } from "@/core/email/sender";
+import { reportError } from "@/core/errors/report";
 import { todayIso } from "@/lib/dates";
 import { sendDueReminders } from "@/domains/tracker/reminders";
 
@@ -19,6 +20,14 @@ export async function GET(request: Request) {
   }
 
   const sender = getEmailSender();
-  const result = await sendDueReminders(todayIso(), sender);
-  return Response.json({ sender: sender.name, ...result });
+  const { failures, ...counts } = await sendDueReminders(todayIso(), sender);
+  // Failed digests are alerts (Sentry), not a failed run: the other sends
+  // succeeded, and a retry would double-send to the users who got theirs.
+  for (const failure of failures) {
+    reportError(failure.error, {
+      cron: "reminders",
+      recipient: failure.email,
+    });
+  }
+  return Response.json({ sender: sender.name, ...counts });
 }

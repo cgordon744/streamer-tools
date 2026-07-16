@@ -187,6 +187,46 @@ describe("sendDueReminders", () => {
     expect(mine[0].subject).toContain("2 payments overdue");
   });
 
+  it("keeps sending after one user's digest fails, and reports the failure", async () => {
+    const victim = await createTestUser();
+    const bystander = await createTestUser();
+    for (const [user, name] of [
+      [victim, "FailFirst Co"],
+      [bystander, "StillSends Co"],
+    ] as const) {
+      const sponsor = await createSponsor(user, { ...sponsorInput, name });
+      await createDeal(
+        user,
+        dealInput(sponsor.id, { paymentDueDate: isoDaysFromToday(-1) }),
+      );
+    }
+
+    const sender = fakeSender();
+    const failingSender: typeof sender = {
+      ...sender,
+      async send(message) {
+        if (message.text.includes("FailFirst Co")) {
+          throw new Error("provider rejected recipient");
+        }
+        return sender.send(message);
+      },
+    };
+
+    const result = await sendDueReminders(today, failingSender);
+
+    // The bystander's digest still went out despite the earlier failure.
+    expect(
+      sender.sent.filter((m) => m.text.includes("StillSends Co")),
+    ).toHaveLength(1);
+    expect(sender.sent.filter((m) => m.text.includes("FailFirst Co"))).toEqual(
+      [],
+    );
+    expect(result.failedSends).toBe(1);
+    expect(result.failures[0].error).toBeInstanceOf(Error);
+    // Both digests count as attempted.
+    expect(result.users).toBeGreaterThanOrEqual(2);
+  });
+
   it("bundles a user's deliverables and overdue payments into one digest", async () => {
     const user = await createTestUser();
     const sponsor = await createSponsor(user, {

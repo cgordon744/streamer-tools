@@ -173,12 +173,24 @@ function buildEmail(
   };
 }
 
+export type ReminderRunResult = {
+  /** Digests attempted (one per user with something due). */
+  users: number;
+  deliverables: number;
+  overdue: number;
+  failedSends: number;
+  /** One entry per failed digest, for the caller to report (Sentry/logs). */
+  failures: { email: string; error: unknown }[];
+};
+
 // Entry point for the cron route: gathers everything due, groups per user,
-// sends one digest email each. Returns counts for the cron response/logs.
+// sends one digest email each. A failed send is collected, never thrown —
+// one bad recipient must not cost every later user their digest (live
+// incident, 2026-07-15). Returns counts for the cron response/logs.
 export async function sendDueReminders(
   today: string,
   sender: EmailSender,
-): Promise<{ users: number; deliverables: number; overdue: number }> {
+): Promise<ReminderRunResult> {
   const [dueSoon, overdue] = await Promise.all([
     findDeliverablesDueSoon(today),
     findOverduePaymentsToRemind(today),
@@ -214,15 +226,22 @@ export async function sendDueReminders(
     byUser.set(o.userId, entry);
   }
 
+  const failures: ReminderRunResult["failures"] = [];
   for (const entry of byUser.values()) {
-    await sender.send(
-      buildEmail(entry.email, entry.userName, entry.due, entry.over),
-    );
+    try {
+      await sender.send(
+        buildEmail(entry.email, entry.userName, entry.due, entry.over),
+      );
+    } catch (error) {
+      failures.push({ email: entry.email, error });
+    }
   }
 
   return {
     users: byUser.size,
     deliverables: dueSoon.length,
     overdue: overdue.length,
+    failedSends: failures.length,
+    failures,
   };
 }
