@@ -50,6 +50,13 @@
       "when": 1784199427774,
       "tag": "0006_tidy_killraven",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1784229062760,
+      "tag": "0007_mean_silverclaw",
+      "breakpoints": true
     }
   ]
 }

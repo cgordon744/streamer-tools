@@ -5,7 +5,9 @@
 
 // One key per portfolio tool (paid features gate at tool granularity —
 // bundle pricing means there is no per-feature gating inside a tool).
-export type Feature = "tracker";
+// "media-kit" is free by the artifact rule (thesis §5) — hasAccess will keep
+// returning true for it even after Stripe lands.
+export type Feature = "tracker" | "media-kit";
 
 export async function hasAccess(
   _userId: string,

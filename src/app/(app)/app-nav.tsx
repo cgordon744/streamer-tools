@@ -1,6 +1,6 @@
 "use client";
 
-import { Building2, LayoutDashboard, Table2 } from "lucide-react";
+import { Building2, IdCard, LayoutDashboard, Table2 } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
@@ -12,12 +12,15 @@ const NAV_LINKS = [
   { href: "/sponsors", label: "Sponsors", icon: Building2 },
 ];
 
-export function AppNav() {
+const MEDIA_KIT_LINK = { href: "/media-kit", label: "Media Kit", icon: IdCard };
+
+export function AppNav({ showMediaKit }: { showMediaKit: boolean }) {
   const pathname = usePathname();
+  const links = showMediaKit ? [...NAV_LINKS, MEDIA_KIT_LINK] : NAV_LINKS;
 
   return (
     <nav className="flex items-center gap-1 md:flex-col md:items-stretch">
-      {NAV_LINKS.map((link) => {
+      {links.map((link) => {
         const active = pathname === link.href;
         const Icon = link.icon;
         return (

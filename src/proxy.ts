@@ -9,7 +9,8 @@ export default NextAuth(authConfig).auth;
 export const config = {
   // api/cron is excluded from session auth — it authenticates via CRON_SECRET
   // in the route handler instead.
+  // kit/* is the public media-kit artifact page — no session required.
   matcher: [
-    "/((?!api/auth|api/cron|login|signup|_next/static|_next/image|favicon.ico).*)",
+    "/((?!api/auth|api/cron|login|signup|kit|_next/static|_next/image|favicon.ico).*)",
   ],
 };

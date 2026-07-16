@@ -5,8 +5,16 @@ import { events } from "@/core/events/schema";
 
 // The event vocabulary. Activation = signup → deal_created; retention =
 // weekly presence of `active`. Add names here as new tools land.
+// Media kit (spec §7): activation = kit_published per signup; distribution =
+// kit_viewed (recorded against the kit owner, third-party views only).
 export type AppEvent =
-  "signup" | "deal_created" | "deal_stage_changed" | "active";
+  | "signup"
+  | "deal_created"
+  | "deal_stage_changed"
+  | "active"
+  | "kit_created"
+  | "kit_published"
+  | "kit_viewed";
 
 // Instrumentation must never break a user-facing flow — failures are
 // swallowed after logging.

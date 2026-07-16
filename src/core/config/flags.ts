@@ -10,4 +10,7 @@ export const flags = {
   // verified email domain + EMAIL_FROM (BUILD_LOG NEEDS INPUT #6). While
   // off, /signup 404s and the signup action refuses.
   signupEnabled: process.env.SIGNUP_ENABLED === "true",
+  // Media kit generator (tool #2). New tools launch behind a flag
+  // (CHASSIS_SPEC §7); while off, /media-kit and public /kit/[slug] 404.
+  mediaKitEnabled: process.env.MEDIA_KIT_ENABLED === "true",
 } as const;

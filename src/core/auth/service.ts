@@ -15,6 +15,16 @@ export async function findUserByEmail(email: string): Promise<User | null> {
   return user ?? null;
 }
 
+export async function getUserName(userId: string): Promise<string | null> {
+  const db = getDb();
+  const [row] = await db
+    .select({ name: users.name })
+    .from(users)
+    .where(eq(users.id, userId))
+    .limit(1);
+  return row?.name ?? null;
+}
+
 export type RegisterResult =
   { ok: true; userId: string } | { ok: false; error: "email_taken" };
 
