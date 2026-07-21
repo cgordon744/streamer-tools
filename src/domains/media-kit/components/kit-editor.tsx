@@ -2,6 +2,7 @@
 
 import {
   ArrowRight,
+  BadgeCheck,
   Check,
   Clapperboard,
   Copy,
@@ -26,11 +27,14 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { DEFAULT_ACCENT_COLOR } from "@/core/config/media-kit";
+import type { DemographicsDisplay } from "@/core/youtube/format";
 import type { YoutubeChannel } from "@/core/youtube/schema";
 import {
   connectChannelAction,
+  disconnectYouTubeAction,
   publishKitAction,
   refreshChannelStatsAction,
+  refreshDemographicsAction,
   saveKitAction,
   unpublishKitAction,
 } from "@/domains/media-kit/actions";
@@ -51,11 +55,18 @@ export function KitEditor({
   channel,
   verifiedSponsors,
   creatorName,
+  verifiedDemographics,
+  ytOutcome,
 }: {
   kit: Kit | null;
   channel: YoutubeChannel | null;
   verifiedSponsors: { name: string; completedDealCount: number }[];
   creatorName: string;
+  // Present while a YouTube connection with fetched demographics exists —
+  // display strings only, never token material.
+  verifiedDemographics: (DemographicsDisplay & { fetchedAt: string }) | null;
+  // Outcome of a just-finished OAuth redirect (?yt=), surfaced inline.
+  ytOutcome: "denied" | "error" | null;
 }) {
   // Editable content is client state; publish/slug state stays on the `kit`
   // prop (server truth, refreshed by revalidatePath after actions).
@@ -99,9 +110,18 @@ export function KitEditor({
     creatorName,
     niche: niche || null,
     pitch: pitch || null,
-    audienceAge: audienceAge || null,
-    audienceGender: audienceGender || null,
-    audienceGeo: audienceGeo || null,
+    // Verified (OAuth) demographics take over the audience slots while
+    // connected; the manual values stay saved underneath as the fallback.
+    audienceAge: verifiedDemographics
+      ? verifiedDemographics.audienceAge
+      : audienceAge || null,
+    audienceGender: verifiedDemographics
+      ? verifiedDemographics.audienceGender
+      : audienceGender || null,
+    audienceGeo: verifiedDemographics
+      ? verifiedDemographics.audienceGeo
+      : audienceGeo || null,
+    demographicsVerified: !!verifiedDemographics,
     contactEmail: contactEmail || null,
     accentColor,
     rateCard,
@@ -225,36 +245,110 @@ export function KitEditor({
                 rows={3}
               />
             </Field>
-            <div className="grid gap-4 sm:grid-cols-3">
-              <Field label="Audience age" id="audienceAge">
-                <Input
-                  id="audienceAge"
-                  value={audienceAge}
-                  onChange={(e) => setAudienceAge(e.target.value)}
-                  placeholder="18–34 (72%)"
-                />
-              </Field>
-              <Field label="Gender split" id="audienceGender">
-                <Input
-                  id="audienceGender"
-                  value={audienceGender}
-                  onChange={(e) => setAudienceGender(e.target.value)}
-                  placeholder="68% male"
-                />
-              </Field>
-              <Field label="Top locations" id="audienceGeo">
-                <Input
-                  id="audienceGeo"
-                  value={audienceGeo}
-                  onChange={(e) => setAudienceGeo(e.target.value)}
-                  placeholder="US, UK, Canada"
-                />
-              </Field>
-            </div>
-            <p className="text-muted-foreground text-xs">
-              Audience numbers are in YouTube Studio under Analytics → Audience.
-              Connecting YouTube for automatic demographics is coming soon.
-            </p>
+            {verifiedDemographics ? (
+              <div className="space-y-3 rounded-lg border p-3">
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <span className="flex items-center gap-1.5 text-sm font-medium">
+                    <BadgeCheck className="size-4 text-emerald-600" />
+                    Audience verified via YouTube
+                  </span>
+                  <span className="text-muted-foreground text-xs">
+                    Updated {verifiedDemographics.fetchedAt}
+                  </span>
+                </div>
+                <dl className="grid gap-x-6 gap-y-2 text-sm sm:grid-cols-3">
+                  {[
+                    { label: "Age", value: verifiedDemographics.audienceAge },
+                    {
+                      label: "Gender",
+                      value: verifiedDemographics.audienceGender,
+                    },
+                    {
+                      label: "Top locations",
+                      value: verifiedDemographics.audienceGeo,
+                    },
+                  ].map((row) => (
+                    <div key={row.label}>
+                      <dt className="text-muted-foreground text-xs tracking-wide uppercase">
+                        {row.label}
+                      </dt>
+                      <dd className="mt-0.5 font-medium">{row.value ?? "—"}</dd>
+                    </div>
+                  ))}
+                </dl>
+                <div className="flex flex-wrap gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    disabled={isPending}
+                    onClick={() => run(refreshDemographicsAction)}
+                  >
+                    <RefreshCw className="size-3.5" /> Refresh
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    disabled={isPending}
+                    onClick={() => run(disconnectYouTubeAction)}
+                  >
+                    Disconnect
+                  </Button>
+                </div>
+              </div>
+            ) : (
+              <>
+                <div className="grid gap-4 sm:grid-cols-3">
+                  <Field label="Audience age" id="audienceAge">
+                    <Input
+                      id="audienceAge"
+                      value={audienceAge}
+                      onChange={(e) => setAudienceAge(e.target.value)}
+                      placeholder="18–34 (72%)"
+                    />
+                  </Field>
+                  <Field label="Gender split" id="audienceGender">
+                    <Input
+                      id="audienceGender"
+                      value={audienceGender}
+                      onChange={(e) => setAudienceGender(e.target.value)}
+                      placeholder="68% male"
+                    />
+                  </Field>
+                  <Field label="Top locations" id="audienceGeo">
+                    <Input
+                      id="audienceGeo"
+                      value={audienceGeo}
+                      onChange={(e) => setAudienceGeo(e.target.value)}
+                      placeholder="US, UK, Canada"
+                    />
+                  </Field>
+                </div>
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <p className="text-muted-foreground text-xs">
+                    Audience numbers are in YouTube Studio under Analytics →
+                    Audience — or connect YouTube to fill and verify them
+                    automatically.
+                  </p>
+                  {/* Full-page navigation into the OAuth redirect flow — a
+                      route handler, so a plain anchor, not a server action. */}
+                  <Button asChild variant="outline" size="sm">
+                    <a href="/api/youtube/oauth/start">
+                      <BadgeCheck className="size-3.5" /> Connect YouTube
+                    </a>
+                  </Button>
+                </div>
+              </>
+            )}
+            {ytOutcome === "denied" ? (
+              <p className="text-xs text-amber-600">
+                YouTube connection was canceled — your kit is unchanged.
+              </p>
+            ) : null}
+            {ytOutcome === "error" ? (
+              <p className="text-xs text-red-600">
+                Connecting YouTube didn&apos;t work — try again in a minute.
+              </p>
+            ) : null}
             <Field label="Accent color" id="accentColor">
               <input
                 id="accentColor"

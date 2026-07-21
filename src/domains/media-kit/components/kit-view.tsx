@@ -14,6 +14,9 @@ export type KitViewData = {
   audienceAge: string | null;
   audienceGender: string | null;
   audienceGeo: string | null;
+  // True when the audience values come from the owner's YouTube Analytics
+  // (OAuth) rather than manual entry — renders the verified badge.
+  demographicsVerified: boolean;
   contactEmail: string | null;
   accentColor: string | null;
   rateCard: RateCardLine[];
@@ -123,7 +126,18 @@ export function KitView({ data }: { data: KitViewData }) {
         ) : null}
 
         {audience.length > 0 ? (
-          <KitSection title="Audience" accent={accent}>
+          <KitSection
+            title="Audience"
+            accent={accent}
+            badge={
+              data.demographicsVerified ? (
+                <span className="flex items-center gap-1 text-xs font-medium text-zinc-500 normal-case">
+                  <BadgeCheck className="size-3.5" style={{ color: accent }} />
+                  Verified via YouTube
+                </span>
+              ) : null
+            }
+          >
             <dl className="grid gap-x-6 gap-y-2 text-sm sm:grid-cols-3">
               {audience.map((row) => (
                 <div key={row.label}>
@@ -211,19 +225,22 @@ export function KitView({ data }: { data: KitViewData }) {
 function KitSection({
   title,
   accent,
+  badge,
   children,
 }: {
   title: string;
   accent: string;
+  badge?: React.ReactNode;
   children: React.ReactNode;
 }) {
   return (
     <section>
       <h2
-        className="mb-3 border-b pb-1.5 text-sm font-semibold tracking-wide uppercase"
+        className="mb-3 flex items-center justify-between gap-2 border-b pb-1.5 text-sm font-semibold tracking-wide uppercase"
         style={{ borderColor: accent }}
       >
         {title}
+        {badge}
       </h2>
       {children}
     </section>

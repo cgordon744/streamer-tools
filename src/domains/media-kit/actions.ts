@@ -6,6 +6,10 @@ import { requireUserId } from "@/core/auth/session";
 import { flags } from "@/core/config/flags";
 import { trackEvent } from "@/core/events/track";
 import { getYouTubeClient, type ChannelSnapshot } from "@/core/youtube/client";
+import {
+  disconnectYouTubeForUser,
+  refreshDemographicsForUser,
+} from "@/core/youtube/demographics";
 import { parseChannelRef, type ChannelRef } from "@/core/youtube/parse";
 import {
   getChannelForUser,
@@ -134,6 +138,39 @@ export async function unpublishKitAction(): Promise<ActionResult> {
   }
   revalidatePath("/media-kit");
   return actionSuccess("Kit unpublished — the link now shows nothing");
+}
+
+export async function refreshDemographicsAction(): Promise<ActionResult> {
+  const disabled = featureDisabled();
+  if (disabled) return disabled;
+  const userId = await requireUserId();
+
+  const result = await refreshDemographicsForUser(userId);
+  revalidatePath("/media-kit");
+  switch (result) {
+    case "refreshed":
+      return actionSuccess("Demographics refreshed");
+    case "no_connection":
+      return actionError("Connect YouTube first");
+    case "reconnect_required":
+      return actionError(
+        "YouTube access has expired — connect YouTube again to keep verified demographics",
+      );
+    case "error":
+      return actionError("YouTube didn't respond — try again in a minute");
+  }
+}
+
+export async function disconnectYouTubeAction(): Promise<ActionResult> {
+  const disabled = featureDisabled();
+  if (disabled) return disabled;
+  const userId = await requireUserId();
+
+  await disconnectYouTubeForUser(userId);
+  revalidatePath("/media-kit");
+  return actionSuccess(
+    "YouTube disconnected — your kit shows manually entered demographics again",
+  );
 }
 
 type SnapshotResult =

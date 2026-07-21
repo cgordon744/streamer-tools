@@ -14,7 +14,10 @@ export type AppEvent =
   | "active"
   | "kit_created"
   | "kit_published"
-  | "kit_viewed";
+  | "kit_viewed"
+  // First successful YouTube OAuth connect (launch-checklist evidence that
+  // demographics auto-fill is live).
+  | "youtube_connected";
 
 // Instrumentation must never break a user-facing flow — failures are
 // swallowed after logging.

@@ -5,7 +5,11 @@ import { requireUserId } from "@/core/auth/session";
 import { hasAccess } from "@/core/billing/entitlements";
 import { UpgradeNotice } from "@/core/billing/upgrade-notice";
 import { flags } from "@/core/config/flags";
-import { getChannelForUser } from "@/core/youtube/queries";
+import { formatDemographics } from "@/core/youtube/format";
+import {
+  getChannelForUser,
+  getConnectionForUser,
+} from "@/core/youtube/queries";
 import { KitEditor } from "@/domains/media-kit/components/kit-editor";
 import { getKitForUser } from "@/domains/media-kit/queries";
 import { getVerifiedSponsors } from "@/domains/tracker/queries";
@@ -14,7 +18,16 @@ export const metadata = {
   title: "Media Kit — Streamer Tools",
 };
 
-export default async function MediaKitPage() {
+const fetchedAtFormat = new Intl.DateTimeFormat("en-US", {
+  month: "short",
+  day: "numeric",
+});
+
+export default async function MediaKitPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ yt?: string }>;
+}) {
   if (!flags.mediaKitEnabled) {
     notFound();
   }
@@ -23,14 +36,30 @@ export default async function MediaKitPage() {
     return <UpgradeNotice toolName="Media Kit" />;
   }
 
-  const [kit, channel, verifiedSponsors, userName] = await Promise.all([
-    getKitForUser(userId),
-    getChannelForUser(userId),
-    // Cross-domain read via tracker's exported query (boundary rule 2).
-    // Additive only: an empty result renders nothing (cold-start rule).
-    getVerifiedSponsors(userId),
-    getUserName(userId),
-  ]);
+  const [kit, channel, connection, verifiedSponsors, userName, params] =
+    await Promise.all([
+      getKitForUser(userId),
+      getChannelForUser(userId),
+      getConnectionForUser(userId),
+      // Cross-domain read via tracker's exported query (boundary rule 2).
+      // Additive only: an empty result renders nothing (cold-start rule).
+      getVerifiedSponsors(userId),
+      getUserName(userId),
+      searchParams,
+    ]);
+
+  // Display strings only cross into the client component — never the
+  // connection row (it carries the sealed token).
+  const verifiedDemographics = connection?.demographics
+    ? {
+        ...formatDemographics(connection.demographics),
+        fetchedAt: fetchedAtFormat.format(
+          connection.demographicsFetchedAt ?? connection.connectedAt,
+        ),
+      }
+    : null;
+  const ytOutcome =
+    params.yt === "denied" || params.yt === "error" ? params.yt : null;
 
   return (
     <div className="space-y-5">
@@ -48,6 +77,8 @@ export default async function MediaKitPage() {
           completedDealCount: s.completedDealCount,
         }))}
         creatorName={userName ?? "Creator"}
+        verifiedDemographics={verifiedDemographics}
+        ytOutcome={ytOutcome}
       />
     </div>
   );

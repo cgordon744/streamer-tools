@@ -5,7 +5,11 @@ import { auth } from "@/auth";
 import { getUserName } from "@/core/auth/service";
 import { flags } from "@/core/config/flags";
 import { trackEvent } from "@/core/events/track";
-import { getChannelForUser } from "@/core/youtube/queries";
+import { formatDemographics } from "@/core/youtube/format";
+import {
+  getChannelForUser,
+  getConnectionForUser,
+} from "@/core/youtube/queries";
 import { KitView } from "@/domains/media-kit/components/kit-view";
 import { getPublishedKitBySlug } from "@/domains/media-kit/queries";
 import { getVerifiedSponsors } from "@/domains/tracker/queries";
@@ -44,13 +48,22 @@ export default async function PublicKitPage({
     notFound();
   }
 
-  const [channel, creatorName, verifiedSponsors, session] = await Promise.all([
-    getChannelForUser(kit.userId),
-    getUserName(kit.userId),
-    // Cross-domain read via tracker's exported query (boundary rule 2).
-    kit.showVerifiedSponsors ? getVerifiedSponsors(kit.userId) : [],
-    auth(),
-  ]);
+  const [channel, creatorName, verifiedSponsors, connection, session] =
+    await Promise.all([
+      getChannelForUser(kit.userId),
+      getUserName(kit.userId),
+      // Cross-domain read via tracker's exported query (boundary rule 2).
+      kit.showVerifiedSponsors ? getVerifiedSponsors(kit.userId) : [],
+      getConnectionForUser(kit.userId),
+      auth(),
+    ]);
+
+  // OAuth-verified demographics replace the manual audience fields while the
+  // owner's connection exists ("self-updating" applies here too); only the
+  // derived display strings reach the render, never the connection row.
+  const verified = connection?.demographics
+    ? formatDemographics(connection.demographics)
+    : null;
 
   // Distribution metric (spec §7) counts third-party views only — the owner
   // checking their own page isn't distribution.
@@ -66,9 +79,12 @@ export default async function PublicKitPage({
             creatorName: creatorName ?? "Creator",
             niche: kit.niche,
             pitch: kit.pitch,
-            audienceAge: kit.audienceAge,
-            audienceGender: kit.audienceGender,
-            audienceGeo: kit.audienceGeo,
+            audienceAge: verified ? verified.audienceAge : kit.audienceAge,
+            audienceGender: verified
+              ? verified.audienceGender
+              : kit.audienceGender,
+            audienceGeo: verified ? verified.audienceGeo : kit.audienceGeo,
+            demographicsVerified: !!verified,
             contactEmail: kit.contactEmail,
             accentColor: kit.accentColor,
             rateCard: kit.rateCard,

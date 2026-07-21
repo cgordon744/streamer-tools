@@ -57,6 +57,13 @@
       "when": 1784229062760,
       "tag": "0007_mean_silverclaw",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1784635767396,
+      "tag": "0008_aspiring_vapor",
+      "breakpoints": true
     }
   ]
 }
